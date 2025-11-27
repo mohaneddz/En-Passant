@@ -1,11 +1,10 @@
 import React from 'react';
-import { Calendar, Clock, MapPin, Trophy, BookOpen, Users } from 'lucide-react';
+import { Calendar, Clock, MapPin, Trophy, BookOpen } from 'lucide-react';
 import Image from 'next/image';
 export default function ChessTournamentLanding() {
   return (
     <div className="min-h-screen bg-neutral-950 text-white">
-      {/* Navigation */}
-
+      
 
       {/* Hero Section */}
       <section className="pt-32 pb-16 px-6 lg:px-8">
@@ -25,11 +24,11 @@ export default function ChessTournamentLanding() {
 
           {/* Main Heading */}
           <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold mb-6">
-            <span className="text-yellow-500">EN</span>{' '}
+            <span className="text-[#EAC360]">EN</span>{' '}
             <span className="text-white">PASSANT</span>
           </h1>
 
-          <h2 className="text-2xl md:text-3xl text-yellow-500 font-semibold mb-4">
+          <h2 className="text-2xl md:text-3xl text-[#EAC360] font-semibold mb-4">
             Chess Tournament
           </h2>
 
@@ -47,7 +46,7 @@ export default function ChessTournamentLanding() {
             <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 hover:border-yellow-500/50 transition">
               <div className="flex items-center space-x-3 mb-4">
                 <div className="w-12 h-12 bg-neutral-800 rounded-lg flex items-center justify-center">
-                  <Calendar className="w-6 h-6 text-yellow-500" />
+                  <Calendar className="w-6 h-6 text-[#EAC360]" />
                 </div>
                 <h3 className="text-xl font-bold">Date</h3>
               </div>
@@ -59,7 +58,7 @@ export default function ChessTournamentLanding() {
             <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 hover:border-yellow-500/50 transition">
               <div className="flex items-center space-x-3 mb-4">
                 <div className="w-12 h-12 bg-neutral-800 rounded-lg flex items-center justify-center">
-                  <Clock className="w-6 h-6 text-yellow-500" />
+                  <Clock className="w-6 h-6 text-[#EAC360]" />
                 </div>
                 <h3 className="text-xl font-bold">Time</h3>
               </div>
@@ -70,7 +69,7 @@ export default function ChessTournamentLanding() {
             <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 hover:border-yellow-500/50 transition">
               <div className="flex items-center space-x-3 mb-4">
                 <div className="w-12 h-12 bg-neutral-800 rounded-lg flex items-center justify-center">
-                  <MapPin className="w-6 h-6 text-yellow-500" />
+                  <MapPin className="w-6 h-6 text-[#EAC360]" />
                 </div>
                 <h3 className="text-xl font-bold">Location</h3>
               </div>
@@ -81,7 +80,7 @@ export default function ChessTournamentLanding() {
             <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 hover:border-yellow-500/50 transition">
               <div className="flex items-center space-x-3 mb-4">
                 <div className="w-12 h-12 bg-neutral-800 rounded-lg flex items-center justify-center">
-                  <Trophy className="w-6 h-6 text-yellow-500" />
+                  <Trophy className="w-6 h-6 text-[#EAC360]" />
                 </div>
                 <h3 className="text-xl font-bold">Format</h3>
               </div>
@@ -96,7 +95,7 @@ export default function ChessTournamentLanding() {
       <section className="py-16 px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center space-x-3 mb-8">
-            <BookOpen className="w-8 h-8 text-yellow-500" />
+            <BookOpen className="w-8 h-8 text-[#EAC360]" />
             <h2 className="text-4xl font-bold">Tournament Rules</h2>
           </div>
 
