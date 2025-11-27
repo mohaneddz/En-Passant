@@ -1,65 +1,140 @@
-import Image from "next/image";
-
-export default function Home() {
+import React from 'react';
+import { Calendar, Clock, MapPin, Trophy, BookOpen, Users } from 'lucide-react';
+import Image from 'next/image';
+export default function ChessTournamentLanding() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div className="min-h-screen bg-neutral-950 text-white">
+      {/* Navigation */}
+
+
+      {/* Hero Section */}
+      <section className="pt-32 pb-16 px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto text-center">
+          {/* Animated Chess Knight */}
+          <div className="mb-8 flex justify-center">
+            <div className="relative">
+              <Image
+                src="/photo.png"
+                alt="Chess Knight"
+                width={200}
+                height={200}
+                className="object-contain"
+              />
+            </div>
+          </div>
+
+          {/* Main Heading */}
+          <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold mb-6">
+            <span className="text-yellow-500">EN</span>{' '}
+            <span className="text-white">PASSANT</span>
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+
+          <h2 className="text-2xl md:text-3xl text-yellow-500 font-semibold mb-4">
+            Chess Tournament
+          </h2>
+
+          <p className="text-lg text-neutral-400 max-w-2xl mx-auto">
+            Join us for an unforgettable day of strategic battles, brilliant tactics, and championship glory
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </section>
+
+      {/* Info Cards */}
+      <section className="py-12 px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Date Card */}
+            <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 hover:border-yellow-500/50 transition">
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="w-12 h-12 bg-neutral-800 rounded-lg flex items-center justify-center">
+                  <Calendar className="w-6 h-6 text-yellow-500" />
+                </div>
+                <h3 className="text-xl font-bold">Date</h3>
+              </div>
+              <p className="text-neutral-400 text-sm">Friday - Saturday</p>
+              <p className="text-neutral-400 text-sm">28th November</p>
+            </div>
+
+            {/* Time Card */}
+            <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 hover:border-yellow-500/50 transition">
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="w-12 h-12 bg-neutral-800 rounded-lg flex items-center justify-center">
+                  <Clock className="w-6 h-6 text-yellow-500" />
+                </div>
+                <h3 className="text-xl font-bold">Time</h3>
+              </div>
+              <p className="text-neutral-400 text-sm">4h00 PM</p>
+            </div>
+
+            {/* Location Card */}
+            <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 hover:border-yellow-500/50 transition">
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="w-12 h-12 bg-neutral-800 rounded-lg flex items-center justify-center">
+                  <MapPin className="w-6 h-6 text-yellow-500" />
+                </div>
+                <h3 className="text-xl font-bold">Location</h3>
+              </div>
+              <p className="text-neutral-400 text-sm">ENSIA</p>
+            </div>
+
+            {/* Format Card */}
+            <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 hover:border-yellow-500/50 transition">
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="w-12 h-12 bg-neutral-800 rounded-lg flex items-center justify-center">
+                  <Trophy className="w-6 h-6 text-yellow-500" />
+                </div>
+                <h3 className="text-xl font-bold">Format</h3>
+              </div>
+              <p className="text-neutral-400 text-sm">Swiss System</p>
+              <p className="text-neutral-400 text-sm">7 rounds</p>
+            </div>
+          </div>
         </div>
-      </main>
+      </section>
+
+      {/* Tournament Rules */}
+      <section className="py-16 px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center space-x-3 mb-8">
+            <BookOpen className="w-8 h-8 text-yellow-500" />
+            <h2 className="text-4xl font-bold">Tournament Rules</h2>
+          </div>
+
+          <div className="space-y-4">
+            {/* Time Control */}
+            <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-6">
+              <h3 className="text-xl font-bold mb-3">Time Control</h3>
+              <p className="text-neutral-400">
+                15 minutes + 10 seconds increment per move
+              </p>
+            </div>
+
+            {/* Scoring System */}
+            <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-6">
+              <h3 className="text-xl font-bold mb-3">Scoring System</h3>
+              <p className="text-neutral-400">
+                Win: 1 point | Draw: 0.5 points | Loss: 0 points
+              </p>
+            </div>
+
+            {/* Tie-Breaking */}
+            <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-6">
+              <h3 className="text-xl font-bold mb-3">Tie-Breaking</h3>
+              <p className="text-neutral-400">
+                1. Direct encounter | 2. Buchholz score | 3. Progressive score
+              </p>
+            </div>
+
+            {/* Conduct */}
+            <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-6">
+              <h3 className="text-xl font-bold mb-3">Conduct</h3>
+              <p className="text-neutral-400">
+                All players must follow FIDE rules. Mobile phones must be turned off. Any violation may result in forfeiture of the game.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
