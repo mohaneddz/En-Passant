@@ -21,9 +21,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased bg-linear-to-br from-blue-300 to-cyan-300 full">
-        <Navbar />
         {children}
-        <Footer />
       </body>
     </html>
   );

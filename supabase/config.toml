@@ -1,0 +1,22 @@
+
+[functions.tournament-logic]
+enabled = true
+verify_jwt = true
+import_map = "./functions/tournament-logic/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/tournament-logic/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/tournament-logic/*.html" ]
+
+[functions.generate-pairings]
+enabled = true
+verify_jwt = true
+import_map = "./functions/generate-pairings/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/generate-pairings/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/generate-pairings/*.html" ]
