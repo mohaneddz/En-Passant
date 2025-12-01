@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Header from '@/components/dashboard/Header';
 import StatsGrid from '@/components/dashboard/StatsGrid';
 import TabNavigation from '@/components/dashboard/TabNavigation';
 import AddPlayerForm from '@/components/dashboard/AddPlayerForm';
 import PlayersTable from '@/components/dashboard/PlayersTable';
+
 import { getPlayers, addPlayer, deletePlayer, LeaderboardEntry, getStats } from '@/lib/api';
 
 interface Player {

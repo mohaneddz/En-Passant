@@ -1,8 +1,12 @@
 "use client";
-import Link from "next/link";
+
 import { Calendar, Clock, MapPin, Trophy, BookOpen } from 'lucide-react';
-import Image from 'next/image';
 import { Button } from "@/components/ui/button";
+import { InfoCard } from "@/components/InfoCard";
+import { RuleCard } from "@/components/RuleCard";
+
+import Link from "next/link";
+import Image from 'next/image';
 
 export default function ChessTournamentLanding() {
   return (
@@ -52,51 +56,35 @@ export default function ChessTournamentLanding() {
       <section className="py-12 px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Date Card */}
-            <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 hover:border-yellow-500/50 transition">
-              <div className="flex items-center space-x-3 mb-4">
-                <div className="w-12 h-12 bg-neutral-800 rounded-lg flex items-center justify-center">
-                  <Calendar className="w-6 h-6 text-[#EAC360]" />
-                </div>
-                <h3 className="text-xl font-bold">Date</h3>
-              </div>
-              <p className="text-neutral-400 text-sm">Friday - Saturday</p>
-              <p className="text-neutral-400 text-sm">28th November</p>
-            </div>
+            <InfoCard
+              title="Date"
+              icon={<Calendar className="w-6 h-6 text-[#EAC360]" />}
+            >
+              <p>Friday - Saturday</p>
+              <p>28th November</p>
+            </InfoCard>
 
-            {/* Time Card */}
-            <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 hover:border-yellow-500/50 transition">
-              <div className="flex items-center space-x-3 mb-4">
-                <div className="w-12 h-12 bg-neutral-800 rounded-lg flex items-center justify-center">
-                  <Clock className="w-6 h-6 text-[#EAC360]" />
-                </div>
-                <h3 className="text-xl font-bold">Time</h3>
-              </div>
-              <p className="text-neutral-400 text-sm">4h00 PM</p>
-            </div>
+            <InfoCard
+              title="Time"
+              icon={<Clock className="w-6 h-6 text-[#EAC360]" />}
+            >
+              <p>4h00 PM</p>
+            </InfoCard>
 
-            {/* Location Card */}
-            <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 hover:border-yellow-500/50 transition">
-              <div className="flex items-center space-x-3 mb-4">
-                <div className="w-12 h-12 bg-neutral-800 rounded-lg flex items-center justify-center">
-                  <MapPin className="w-6 h-6 text-[#EAC360]" />
-                </div>
-                <h3 className="text-xl font-bold">Location</h3>
-              </div>
-              <p className="text-neutral-400 text-sm">ENSIA</p>
-            </div>
+            <InfoCard
+              title="Location"
+              icon={<MapPin className="w-6 h-6 text-[#EAC360]" />}
+            >
+              <p>ENSIA</p>
+            </InfoCard>
 
-            {/* Format Card */}
-            <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 hover:border-yellow-500/50 transition">
-              <div className="flex items-center space-x-3 mb-4">
-                <div className="w-12 h-12 bg-neutral-800 rounded-lg flex items-center justify-center">
-                  <Trophy className="w-6 h-6 text-[#EAC360]" />
-                </div>
-                <h3 className="text-xl font-bold">Format</h3>
-              </div>
-              <p className="text-neutral-400 text-sm">Swiss System</p>
-              <p className="text-neutral-400 text-sm">7 rounds</p>
-            </div>
+            <InfoCard
+              title="Format"
+              icon={<Trophy className="w-6 h-6 text-[#EAC360]" />}
+            >
+              <p>Swiss System</p>
+              <p>7 rounds</p>
+            </InfoCard>
           </div>
         </div>
       </section>
@@ -110,37 +98,22 @@ export default function ChessTournamentLanding() {
           </div>
 
           <div className="space-y-4">
-            {/* Time Control */}
-            <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-6">
-              <h3 className="text-xl font-bold mb-3">Time Control</h3>
-              <p className="text-neutral-400">
-                15 minutes + 10 seconds increment per move
-              </p>
-            </div>
-
-            {/* Scoring System */}
-            <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-6">
-              <h3 className="text-xl font-bold mb-3">Scoring System</h3>
-              <p className="text-neutral-400">
-                Win: 1 point | Draw: 0.5 points | Loss: 0 points
-              </p>
-            </div>
-
-            {/* Tie-Breaking */}
-            <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-6">
-              <h3 className="text-xl font-bold mb-3">Tie-Breaking</h3>
-              <p className="text-neutral-400">
-                1. Direct encounter | 2. Buchholz score | 3. Progressive score
-              </p>
-            </div>
-
-            {/* Conduct */}
-            <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-6">
-              <h3 className="text-xl font-bold mb-3">Conduct</h3>
-              <p className="text-neutral-400">
-                All players must follow FIDE rules. Mobile phones must be turned off. Any violation may result in forfeiture of the game.
-              </p>
-            </div>
+            <RuleCard
+              title="Time Control"
+              description="15 minutes + 10 seconds increment per move"
+            />
+            <RuleCard
+              title="Scoring System"
+              description="Win: 1 point | Draw: 0.5 points | Loss: 0 points"
+            />
+            <RuleCard
+              title="Tie-Breaking"
+              description="1. Direct encounter | 2. Buchholz score | 3. Progressive score"
+            />
+            <RuleCard
+              title="Conduct"
+              description="All players must follow FIDE rules. Mobile phones must be turned off. Any violation may result in forfeiture of the game."
+            />
           </div>
         </div>
       </section>
