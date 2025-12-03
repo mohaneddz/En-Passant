@@ -17,6 +17,7 @@ interface Player {
   id: string;
   name: string;
   points: number;
+  buchholz: number;
   wins: number;
   losses: number;
   draws: number;
@@ -104,7 +105,7 @@ export default function ChessDashboard() {
 
   const isNextPhaseDisabled = rounds.length > 0 && !isRoundValidated;
 
-  const handleAddPlayer = async (newPlayer: Omit<Player, 'id'>) => {
+  const handleAddPlayer = async (newPlayer: { name: string }) => {
     try {
       await addPlayer(newPlayer.name);
       await fetchPlayers(); // Refresh list

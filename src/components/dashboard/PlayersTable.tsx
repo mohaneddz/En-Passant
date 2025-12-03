@@ -5,6 +5,7 @@ interface Player {
   id: string;
   name: string;
   points: number;
+  buchholz: number;
   wins: number;
   losses: number;
   draws: number;
@@ -19,6 +20,7 @@ const PlayerRow: React.FC<PlayerRowProps> = ({ player, onDelete }) => (
   <tr className="border-b border-[#333] hover:bg-[#262626] transition-colors group">
     <td className="px-6 py-5 text-white font-medium">{player.name}</td>
     <td className="px-6 py-5 text-white font-bold">{player.points}</td>
+    <td className="px-6 py-5 text-white font-bold">{player.buchholz}</td>
     <td className="px-6 py-5 text-white font-bold">{player.wins}</td>
     <td className="px-6 py-5 text-white font-bold">{player.draws}</td>
     <td className="px-6 py-5 text-white font-bold">{player.losses}</td>
@@ -51,6 +53,7 @@ const PlayersTable: React.FC<PlayersTableProps> = ({ players, onDelete }) => (
           <tr>
             <th className="px-6 py-4 text-left text-gray-500 font-bold text-xs uppercase tracking-wider">Player</th>
             <th className="px-6 py-4 text-left text-gray-500 font-bold text-xs uppercase tracking-wider">Points</th>
+            <th className="px-6 py-4 text-left text-gray-500 font-bold text-xs uppercase tracking-wider">Buchholz</th>
             <th className="px-6 py-4 text-left text-gray-500 font-bold text-xs uppercase tracking-wider">Wins</th>
             <th className="px-6 py-4 text-left text-gray-500 font-bold text-xs uppercase tracking-wider">Draws</th>
             <th className="px-6 py-4 text-left text-gray-500 font-bold text-xs uppercase tracking-wider">Losses</th>

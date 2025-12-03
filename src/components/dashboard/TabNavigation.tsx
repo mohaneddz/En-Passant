@@ -28,7 +28,7 @@ const TabNavigation: React.FC<TabNavigationProps> = ({
   const disabledClass = "opacity-50 cursor-not-allowed hover:bg-transparent hover:text-inherit shadow-none";
 
   return (
-    <div className="flex justify-between items-center mb-8">
+    <div className="flex flex-col md:flex-row gap-8 md:gap-0 justify-between items-center mb-8">
       <div className={containerClass}>
         <Button
           onClick={() => setActiveTab('players')}
