@@ -1,11 +1,9 @@
 "use client";
 
 import { Calendar, Clock, MapPin, Trophy, BookOpen } from 'lucide-react';
-import { Button } from "@/components/ui/button";
 import { InfoCard } from "@/components/InfoCard";
 import { RuleCard } from "@/components/RuleCard";
 
-import Link from "next/link";
 import Image from 'next/image';
 
 export default function ChessTournamentLanding() {
@@ -79,11 +77,11 @@ export default function ChessTournamentLanding() {
             </InfoCard>
           </div>
         </div>
-      </section>
+    </section>
 
       {/* Tournament Rules */}
       <section className="py-16 px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-7xl mx-auto">
           <div className="flex items-center space-x-3 mb-8">
             <BookOpen className="w-8 h-8 text-[#EAC360]" />
             <h2 className="text-4xl font-bold">Tournament Rules</h2>

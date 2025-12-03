@@ -51,7 +51,7 @@ export default function LeaderboardPage() {
       <div className="flex flex-col items-center gap-2 mb-20">
         <CrownIcon className="w-16 h-16 text-[#fbbf24] mb-2" />
         <h1 className="text-5xl font-bold tracking-widest uppercase">Leaderboard</h1>
-        <p className="text-[#fbbf24] text-sm font-semibold tracking-widest uppercase">Leaderboard</p>
+        <p className="text-[#fbbf24] text-sm font-semibold tracking-widest uppercase">Our Top Players</p>
       </div>
 
       {/* Table Container */}

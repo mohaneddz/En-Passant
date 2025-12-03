@@ -12,11 +12,10 @@ interface Player {
 
 interface PlayerRowProps {
   player: Player;
-  onEdit: (player: Player) => void;
   onDelete: (id: string) => void;
 }
 
-const PlayerRow: React.FC<PlayerRowProps> = ({ player, onEdit, onDelete }) => (
+const PlayerRow: React.FC<PlayerRowProps> = ({ player, onDelete }) => (
   <tr className="border-b border-[#333] hover:bg-[#262626] transition-colors group">
     <td className="px-6 py-5 text-white font-medium">{player.name}</td>
     <td className="px-6 py-5 text-white font-bold">{player.points}</td>
@@ -25,12 +24,6 @@ const PlayerRow: React.FC<PlayerRowProps> = ({ player, onEdit, onDelete }) => (
     <td className="px-6 py-5 text-white font-bold">{player.losses}</td>
     <td className="px-6 py-5">
       <div className="flex gap-2">
-        <button
-          onClick={() => onEdit(player)}
-          className="p-2 bg-[#333] hover:bg-[#444] rounded-lg transition-colors border border-transparent hover:border-gray-600"
-        >
-          <Edit size={14} className="text-gray-300" />
-        </button>
         <button
           onClick={() => onDelete(player.id)}
           className="p-2 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-colors border border-transparent hover:border-red-500/30"
@@ -44,11 +37,10 @@ const PlayerRow: React.FC<PlayerRowProps> = ({ player, onEdit, onDelete }) => (
 
 interface PlayersTableProps {
   players: Player[];
-  onEdit: (player: Player) => void;
   onDelete: (id: string) => void;
 }
 
-const PlayersTable: React.FC<PlayersTableProps> = ({ players, onEdit, onDelete }) => (
+const PlayersTable: React.FC<PlayersTableProps> = ({ players, onDelete }) => (
   <div className="bg-[#1a1a1a] border border-[#333] rounded-xl overflow-hidden">
     <div className="p-8 border-b border-[#333]">
       <h2 className="text-white text-xl font-bold">All Players</h2>
@@ -70,7 +62,6 @@ const PlayersTable: React.FC<PlayersTableProps> = ({ players, onEdit, onDelete }
             <PlayerRow
               key={player.id}
               player={player}
-              onEdit={onEdit}
               onDelete={onDelete}
             />
           ))}

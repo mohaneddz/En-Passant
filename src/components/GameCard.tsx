@@ -38,5 +38,6 @@ function getColor(status: string) {
     if (s === "white wins") return "bg-white text-black";
     if (s === "black wins") return "bg-black text-white";
     if (s === "draw" || s === "scheduled") return "bg-gray-700 text-white";
+    if (s === "bye") return "bg-blue-600 text-white";
     return "bg-[#FCD34D] text-black";
 }

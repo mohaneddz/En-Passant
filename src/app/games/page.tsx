@@ -8,6 +8,15 @@ export default async function Page() {
     const rounds = allRounds.length > 3 ? allRounds.slice(-3) : allRounds;
     const activeRoundId = rounds.find(r => r.status === 'In progress')?.id || rounds[0]?.id;
 
+    const getGridColsClass = (count: number) => {
+        switch (count) {
+            case 1: return 'grid-cols-1';
+            case 2: return 'grid-cols-2';
+            case 3: return 'grid-cols-3';
+            default: return 'grid-cols-3';
+        }
+    };
+
     return (
         <div className="min-h-screen text-white p-10 font-sans">
 
@@ -21,7 +30,7 @@ export default async function Page() {
                 </div>
 
                 <Tabs defaultValue={activeRoundId} className="w-full">
-                    <TabsList className={`w-full bg-[#1A1A1A] p-1 h-auto rounded-lg grid grid-cols-${rounds.length} mb-8`}>
+                    <TabsList className={`w-full bg-[#1A1A1A] p-1 h-auto rounded-lg grid ${getGridColsClass(rounds.length)} mb-8`}>
                         {rounds.map((round) => (
                             <TabsTrigger
                                 key={round.id}

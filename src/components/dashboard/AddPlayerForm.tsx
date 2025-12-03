@@ -67,30 +67,6 @@ const AddPlayerForm: React.FC<AddPlayerFormProps> = ({ onAddPlayer }) => {
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
           placeholder="Enter player full name"
         />
-        <FormInput
-          label="Points"
-          type="number"
-          value={formData.points}
-          onChange={(e) => setFormData({ ...formData, points: e.target.value })}
-        />
-        <FormInput
-          label="Wins"
-          type="number"
-          value={formData.wins}
-          onChange={(e) => setFormData({ ...formData, wins: e.target.value })}
-        />
-        <FormInput
-          label="Losses"
-          type="number"
-          value={formData.losses}
-          onChange={(e) => setFormData({ ...formData, losses: e.target.value })}
-        />
-        <FormInput
-          label="Draws"
-          type="number"
-          value={formData.draws}
-          onChange={(e) => setFormData({ ...formData, draws: e.target.value })}
-        />
         <button
           onClick={handleSubmit}
           className="mt-6 flex items-center justify-center gap-2 bg-[#fbbf24] hover:bg-[#f59e0b] text-black font-bold px-6 py-3 rounded-lg transition-all w-full sm:w-auto"
