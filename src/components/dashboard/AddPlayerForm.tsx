@@ -4,6 +4,7 @@ import { Plus } from 'lucide-react';
 interface Player {
   id: string;
   name: string;
+  rating: number;
   points: number;
   wins: number;
   losses: number;
@@ -38,6 +39,7 @@ interface AddPlayerFormProps {
 const AddPlayerForm: React.FC<AddPlayerFormProps> = ({ onAddPlayer }) => {
   const [formData, setFormData] = useState({
     name: '',
+    rating: '1200',
     points: '0',
     wins: '0',
     losses: '0',
@@ -47,12 +49,13 @@ const AddPlayerForm: React.FC<AddPlayerFormProps> = ({ onAddPlayer }) => {
   const handleSubmit = () => {
     onAddPlayer({
       name: formData.name,
+      rating: parseInt(formData.rating) || 0,
       points: parseFloat(formData.points),
       wins: parseInt(formData.wins),
       losses: parseInt(formData.losses),
       draws: parseInt(formData.draws)
     });
-    setFormData({ name: '', points: '0', wins: '0', losses: '0', draws: '0' });
+    setFormData({ name: '', rating: '1200', points: '0', wins: '0', losses: '0', draws: '0' });
   };
 
   return (
@@ -66,6 +69,13 @@ const AddPlayerForm: React.FC<AddPlayerFormProps> = ({ onAddPlayer }) => {
           value={formData.name}
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
           placeholder="Enter player full name"
+        />
+        <FormInput
+          label="Rating"
+          type="number"
+          value={formData.rating}
+          onChange={(e) => setFormData({ ...formData, rating: e.target.value })}
+          placeholder="1200"
         />
         <button
           onClick={handleSubmit}
