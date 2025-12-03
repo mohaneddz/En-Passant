@@ -3,12 +3,12 @@ import React from 'react';
 
 type Props = React.InputHTMLAttributes<HTMLInputElement>;
 
-export function Input(props: Props) {
+export function Input({ className, ...props }: Props) {
   return (
     <input
       {...props}
-      className="rounded-md border px-3 py-2 text-sm w-full"
-      style={{border:'1px solid #d1d5db',outline:'none'}}
+      className={`rounded-md border py-2 text-sm w-full text-white ${className}`}
+      style={{ outline: 'none' }}
     />
   );
 }

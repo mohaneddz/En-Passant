@@ -1,7 +1,10 @@
-export default function GameCard({ gameNumber, whitePlayer, blackPlayer, status, statusColor = "yellow"
+export default function GameCard({ gameNumber, whitePlayer, blackPlayer, status
 }: {
-    gameNumber: number; whitePlayer: string; blackPlayer: string; status: string; statusColor?: "yellow" | "green" | "gray";
+    gameNumber: number; whitePlayer: string; blackPlayer: string; status: string;
 }) {
+
+    const statusColor = getColor(status);
+
     return (
         <div className="bg-[#1A1A1A] rounded-xl p-6 flex flex-col md:flex-row items-center justify-between border border-white/5 gap-4">
             <div className="font-bold text-lg w-24 text-center md:text-left">Game {gameNumber}</div>
@@ -21,15 +24,19 @@ export default function GameCard({ gameNumber, whitePlayer, blackPlayer, status,
             </div>
 
             <div className="w-24 flex justify-center md:justify-end">
-                <span className={`px-4 py-1.5 rounded-full text-xs text-nowrap font-bold capitalize ${statusColor === "green"
-                    ? "bg-green-600 text-white"
-                    : statusColor === "gray"
-                        ? "bg-gray-700 text-white"
-                        : "bg-[#FCD34D] text-black"
-                    }`}>
+                <span className={`px-4 py-1.5 rounded-full text-xs text-nowrap font-bold capitalize ${statusColor}`}>
                     {status}
                 </span>
             </div>
         </div>
     );
+}
+
+
+function getColor(status: string) {
+    const s = status.toLowerCase();
+    if (s === "white wins") return "bg-white text-black";
+    if (s === "black wins") return "bg-black text-white";
+    if (s === "draw" || s === "scheduled") return "bg-gray-700 text-white";
+    return "bg-[#FCD34D] text-black";
 }

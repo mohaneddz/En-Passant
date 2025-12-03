@@ -7,7 +7,7 @@ import TabNavigation from '@/components/dashboard/TabNavigation';
 import AddPlayerForm from '@/components/dashboard/AddPlayerForm';
 import PlayersTable from '@/components/dashboard/PlayersTable';
 
-import { getPlayers, addPlayer, deletePlayer, LeaderboardEntry, getStats } from '@/lib/api';
+import { getPlayers, addPlayer, deletePlayer, LeaderboardView, getStats, updatePlayer } from '@/lib/api';
 
 interface Player {
   id: string;
@@ -68,8 +68,12 @@ export default function ChessDashboard() {
     }
   };
 
-  const handleEditPlayer = (player: Player) => {
+  const handleEditPlayer = async (player: Player) => {
     console.log('Edit player:', player);
+    await updatePlayer(player.id, {
+      name: player.name,
+    });
+    await fetchPlayers(); // Refresh list
   };
 
   const handleDeletePlayer = async (id: string) => {

@@ -1,11 +1,13 @@
+// BUT HERE THE OTHER METHOD WITH NO API???
 import { supabase } from '@/lib/supabase/client';
 import { Database } from '@/lib/supabase/database.types';
-import { number } from 'motion';
 
 export type Player = Database['public']['Tables']['players']['Row'];
-export type LeaderboardEntry = Database['public']['Views']['leaderboard']['Row'];
+export type Leaderboard = Database['public']['Tables']['leaderboard']['Row']
 export type Round = Database['public']['Tables']['rounds']['Row'];
 export type Game = Database['public']['Tables']['games']['Row'];
+
+export type LeaderboardView = Database['public']['Views']['leaderboard']['Row'];
 
 // --- Players ---
 
@@ -22,7 +24,7 @@ export const getPlayers = async () => {
     .order('wins', { ascending: false });
 
   if (error) throw error;
-  return data as LeaderboardEntry[];
+  return data as LeaderboardView[];
 };
 
 /**
@@ -165,3 +167,15 @@ export const getStats = async () => {
   if (error) throw error;
   return {totalPlayers, totalRounds, gamesPlayed, currentRound: currentRound?.round_number};
 };
+
+// --- Leaderboard ---
+
+export const addLeaderboardEntry = async (playerId: string) => {
+  const { data, error } = await supabase
+    .from('leaderboard')
+    .insert([{ id: playerId, name: '', points: 0, wins: 0, losses: 0, draws: 0, buchholz: 0, is_active: true }])
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}

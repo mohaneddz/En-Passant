@@ -1,94 +1,101 @@
 "use client";
-import React, { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { supabase } from "@/lib/supabase/client";
+
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Mail, Lock, Eye, EyeOff } from "lucide-react";
+import Image from "next/image";
+import { useSignInLogic } from "@/hooks/useSignInLogic";
 
 export default function SignInForm() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const redirectPath = searchParams.get("redirect") || "/dashboard";
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setMessage(null);
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (error) setMessage(error.message);
-      else {
-        const session = data.session;
-        if (session?.access_token && session?.refresh_token) {
-          const res = await fetch("/api/auth/set-session", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              access_token: session.access_token,
-              refresh_token: session.refresh_token,
-            }),
-          });
-
-          if (!res.ok) {
-            const err = await res.json().catch(() => ({}));
-            setMessage(err?.error || "Failed to set server session");
-            return;
-          }
-        }
-
-        router.replace(redirectPath);
-      }
-    } catch (err: any) {
-      setMessage(err?.message ?? "Unexpected error");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const {
+    email,
+    setEmail,
+    password,
+    setPassword,
+    loading,
+    message,
+    showPassword,
+    setShowPassword,
+    handleSignIn,
+  } = useSignInLogic();
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-3 w-full">
-      <label className="flex flex-col gap-1">
-        <span className="text-sm">Email</span>
-        <Input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-      </label>
-
-      <label className="flex flex-col gap-1">
-        <span className="text-sm">Password</span>
-        <Input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-      </label>
-
-      <Button type="submit" disabled={loading} className="w-full">
-        {loading ? "Signing in..." : "Sign in"}
-      </Button>
-
-      {message && (
-        <div
-          className={`text-sm ${
-            message.includes("success") || message.includes("Logged")
-              ? "text-green-600"
-              : "text-red-600"
-          }`}
-        >
-          {message}
+    <div className="w-full max-w-md p-8 rounded-xl border border-[#C5A059] bg-[#1A1A1A] text-white shadow-2xl mx-auto">
+      <div className="flex flex-col items-center mb-8">
+        <div className="mb-4">
+          <Image src="/assets/logo.png" alt="Logo" width={64} height={64} />
         </div>
-      )}
-    </form>
+        <h1 className="text-3xl font-bold mb-2">Admin Portal</h1>
+        <p className="text-gray-400 text-sm">
+          Sign in to manage the tournament
+        </p>
+      </div>
+
+      <form
+        onSubmit={handleSignIn}
+        className="flex flex-col gap-5 w-full"
+      >
+        <div className="flex flex-col gap-2">
+          <label className="text-sm font-bold">Email</label>
+          <div className="relative">
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 h-5 w-5" />
+            <Input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              placeholder="admin@ensia.edu.dz"
+              className="pl-12 bg-[#2A2A2A] border-none text-gray-200 placeholder:text-gray-600 h-12 focus-visible:ring-1 focus-visible:ring-[#C5A059]"
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <label className="text-sm font-bold">Password</label>
+          <div className="relative">
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 h-5 w-5" />
+            <Input
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              placeholder="••••••"
+              className="pl-12 pr-10 bg-[#2A2A2A] border-none text-gray-200 placeholder:text-gray-600 h-12 focus-visible:ring-1 focus-visible:ring-[#C5A059]"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300"
+            >
+              {showPassword ? (
+                <EyeOff className="h-5 w-5" />
+              ) : (
+                <Eye className="h-5 w-5" />
+              )}
+            </button>
+          </div>
+        </div>
+
+        <Button
+          type="submit"
+          disabled={loading}
+          className="w-full mt-4 bg-[#EBCB6B] hover:bg-[#d4b55b] text-black font-bold h-12 text-lg transition-colors"
+        >
+          {loading ? "Signing in..." : "Sign in"}
+        </Button>
+
+        {message && (
+          <div
+            className={`text-sm text-center mt-2 ${
+              message.includes("success") || message.includes("Logged")
+                ? "text-green-500"
+                : "text-red-500"
+            }`}
+          >
+            {message}
+          </div>
+        )}
+      </form>
+    </div>
   );
 }

@@ -1,9 +1,13 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Swords } from "lucide-react";
 import GameCard from "@/components/GameCard";
-import { roundsData } from "@/data/rounds";
+import { getRounds } from "@/server/rounds";
 
-export default function Page() {
+export default async function Page() {
+    const allRounds = await getRounds();
+    const rounds = allRounds.length > 3 ? allRounds.slice(-3) : allRounds;
+    const activeRoundId = rounds.find(r => r.status === 'In progress')?.id || rounds[0]?.id;
+
     return (
         <div className="min-h-screen text-white p-10 font-sans">
 
@@ -16,13 +20,14 @@ export default function Page() {
                     <p className="text-[#fbbf24] text-sm font-semibold tracking-widest uppercase">Plans & Results</p>
                 </div>
 
-                <Tabs defaultValue="round2" className="w-full">
-                    <TabsList className="w-full bg-[#1A1A1A] p-1 h-auto rounded-lg grid grid-cols-3 mb-8">
-                        {roundsData.map((round) => (
+                <Tabs defaultValue={activeRoundId} className="w-full">
+                    <TabsList className={`w-full bg-[#1A1A1A] p-1 h-auto rounded-lg grid grid-cols-${rounds.length} mb-8`}>
+                        {rounds.map((round) => (
                             <TabsTrigger
                                 key={round.id}
                                 value={round.id}
                                 className="py-3 text-base rounded-md transition-all data-[state=active]:text-black"
+                                // @ts-ignore - activeClassName might be a custom prop in your setup, keeping it if valid
                                 activeClassName="bg-[#FCD34D]"
                             >
                                 {round.label}
@@ -30,7 +35,7 @@ export default function Page() {
                         ))}
                     </TabsList>
 
-                    {roundsData.map((round) => (
+                    {rounds.map((round) => (
                         <TabsContent key={round.id} value={round.id} className="space-y-6">
                             <div className="flex items-center gap-2 text-gray-400 mb-6">
                                 <Swords className="w-5 h-5 text-[#FCD34D]" />
@@ -47,7 +52,6 @@ export default function Page() {
                                         whitePlayer={game.whitePlayer}
                                         blackPlayer={game.blackPlayer}
                                         status={game.status}
-                                        statusColor={game.statusColor}
                                     />
                                 ))}
                             </div>

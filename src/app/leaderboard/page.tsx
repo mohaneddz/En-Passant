@@ -1,8 +1,49 @@
+"use client";
 import { CrownIcon } from "@/components/CrownIcon";
 import { MedalIcon } from "@/components/MedalIcon";
-import { players } from "@/data/players";
+import { getLeaderboard } from "@/server/leaderboard";
+import { useEffect, useState } from "react";
 
-export default function page() {
+interface Player {
+  rank: number;
+  name: string;
+  points: number;
+  wins: number;
+  draws: number;
+  losses: number;
+}
+
+export default function LeaderboardPage() {
+  
+  const [players, setPlayers] = useState<Player[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchLeaderboard = async () => {
+      try {
+        const data = await getLeaderboard();
+        // Assuming the data returned needs to be mapped to include rank if not present, 
+        // or just used directly if the server returns it. 
+        // Here we map it to ensure rank exists based on index if the DB doesn't store it explicitly.
+        const rankedData = data.map((player: any, index: number) => ({
+          ...player,
+          rank: index + 1
+        }));
+        setPlayers(rankedData);
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLeaderboard();
+  }, []);
+
+  if (loading) return <div className="min-h-screen text-white p-10 flex items-center justify-center">Loading...</div>;
+  if (error) return <div className="min-h-screen text-white p-10 flex items-center justify-center">Error: {error}</div>;
+
   return (
     <div className="min-h-screen text-white p-10 font-sans flex flex-col items-center">
       
@@ -66,4 +107,4 @@ export default function page() {
       </div>
     </div>
   );
-};
+}

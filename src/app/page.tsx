@@ -41,14 +41,6 @@ export default function ChessTournamentLanding() {
             Join us for an unforgettable day of strategic battles, brilliant tactics, and championship glory
           </p>
 
-          <div style={{ display: "flex", gap: 8, justifyContent: "center" }}>
-            <Link href="/login">
-              <Button variant="ghost">Login</Button>
-            </Link>
-            <Link href="/signup">
-              <Button>Sign up</Button>
-            </Link>
-          </div>
         </div>
       </section>
 
