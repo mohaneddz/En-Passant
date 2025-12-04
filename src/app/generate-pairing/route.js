@@ -148,6 +148,9 @@ export async function POST(req) {
     // Reset all rounds is_current to false
     await supabase.from('rounds').update({ is_current: false }).neq('id', roundId);
 
+    // Ensure previous active rounds are marked as completed
+    await supabase.from('rounds').update({ status: 'Completed' }).neq('id', roundId).eq('status', 'Active');
+
     // Update round status to 'Active' and set is_current to true
     await supabase.from('rounds').update({ status: 'Active', is_current: true }).eq('id', roundId);
 

@@ -126,7 +126,7 @@ export default function ChessDashboard() {
 
       // 0. Mark current round as completed if it exists
       if (rounds.length > 0) {
-        const currentActiveRound = rounds.find(r => r.status === 'In progress');
+        const currentActiveRound = rounds.find(r => r.status === 'Active');
         if (currentActiveRound) {
           await updateRoundStatus(currentActiveRound.id, 'Completed');
         }
