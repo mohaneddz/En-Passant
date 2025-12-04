@@ -108,8 +108,8 @@ export const getCurrentRound = async () => {
     .from('rounds')
     .select('*')
     .eq('is_current', true)
-    .single();
-  if (error && error.code == 'PGRST116') return null;
+    .maybeSingle();
+  
   if (error) throw error;
   return data;
 };
@@ -165,17 +165,49 @@ export const getStats = async () => {
     .select('*', {count: 'exact'})
     const currentRound = await getCurrentRound();
   if (error) throw error;
-  return {totalPlayers, totalRounds, gamesPlayed, currentRound: currentRound?.round_number};
+  return {
+    totalPlayers,
+    totalRounds,
+    gamesPlayed,
+    currentRound: currentRound?.round_number
+  };
 };
 
-// --- Leaderboard ---
-
-export const addLeaderboardEntry = async (playerId: string) => {
-  const { data, error } = await supabase
-    .from('leaderboard')
-    .insert([{ id: playerId, name: '', points: 0, wins: 0, losses: 0, draws: 0, buchholz: 0, is_active: true }])
-    .select()
+export const deleteLastRound = async () => {
+  // 1. Get the last round
+  const { data: lastRound, error: fetchError } = await supabase
+    .from('rounds')
+    .select('id, round_number')
+    .order('round_number', { ascending: false })
+    .limit(1)
     .single();
+
+  if (fetchError || !lastRound) return;
+
+  // 2. Delete games associated with this round
+  const { error: gamesError } = await supabase
+    .from('games')
+    .delete()
+    .eq('round_id', lastRound.id);
+
+  if (gamesError) throw gamesError;
+
+  // 3. Delete the round itself
+  const { error: roundError } = await supabase
+    .from('rounds')
+    .delete()
+    .eq('id', lastRound.id);
+
+  if (roundError) throw roundError;
+
+  return true;
+};
+
+export const updateRoundStatus = async (roundId: string, status: string) => {
+  const { error } = await supabase
+    .from('rounds')
+    .update({ status })
+    .eq('id', roundId);
+
   if (error) throw error;
-  return data;
-}
+};

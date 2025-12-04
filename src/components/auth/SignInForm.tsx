@@ -81,7 +81,7 @@ export default function SignInForm() {
           disabled={loading}
           className="w-full mt-4 bg-[#EBCB6B] hover:bg-[#d4b55b] text-black font-bold h-12 text-lg transition-colors"
         >
-          {loading ? "Signing in..." : "Sign in"}
+          {loading ? "Logging in..." : "Log in"}
         </Button>
 
         {message && (

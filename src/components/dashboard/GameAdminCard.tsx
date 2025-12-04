@@ -4,7 +4,7 @@ import { Lock } from 'lucide-react';
 interface GameAdminCardProps {
   gameNumber: number;
   whitePlayer: string;
-  blackPlayer: string;
+  blackPlayer: string | null | undefined;
   status: string;
   selectedResult?: string;
   onSelectResult?: (result: string) => void;
@@ -21,8 +21,10 @@ export default function GameAdminCard({
   isEditable = false
 }: GameAdminCardProps) {
 
+  const isBye = status?.toLowerCase() === 'bye' || !blackPlayer || blackPlayer === 'Unknown';
+
   const handleSelect = (result: string) => {
-    if (isEditable && onSelectResult) {
+    if (isEditable && !isBye && onSelectResult) {
       onSelectResult(result);
     }
   };
@@ -36,6 +38,35 @@ export default function GameAdminCard({
     }
     return "bg-[#262626] text-gray-400 border-transparent hover:bg-[#333] hover:text-white hover:border-gray-600";
   };
+
+  if (isBye) {
+    return (
+      <div className="bg-[#1a1a1a] border border-[#222] rounded-lg p-3 flex flex-col sm:flex-row items-center gap-4 opacity-75 cursor-not-allowed">
+        {/* Game Number */}
+        <div className="text-gray-500 text-xs font-mono font-bold w-16 text-center sm:text-left">
+          GAME {gameNumber}
+        </div>
+
+        {/* Player with Bye */}
+        <div className="flex-1 flex items-center justify-start gap-3 w-full">
+          <div className="text-sm font-medium text-[#FCD34D] truncate">
+            {whitePlayer}
+          </div>
+          <div className="text-xs text-gray-500 italic">
+            receives a bye (1 point)
+          </div>
+        </div>
+
+        {/* Status Badge */}
+        <div className="flex items-center gap-1 min-w-[140px] justify-end">
+           <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border flex items-center gap-1.5 bg-blue-900/10 text-blue-500/70 border-blue-900/20">
+              BYE
+              <Lock className="w-3 h-3 opacity-60" />
+            </span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={cn(
@@ -96,8 +127,8 @@ export default function GameAdminCard({
           <div className="flex items-center gap-2" title="This game is locked">
              <span className={cn(
                 "px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border flex items-center gap-1.5",
-                status.toLowerCase().includes("win") ? "bg-green-900/10 text-green-500/70 border-green-900/20" :
-                status.toLowerCase().includes("draw") ? "bg-gray-800/50 text-gray-500 border-gray-700/50" :
+                status?.toLowerCase().includes("win") ? "bg-green-900/10 text-green-500/70 border-green-900/20" :
+                status?.toLowerCase().includes("draw") ? "bg-gray-800/50 text-gray-500 border-gray-700/50" :
                 "bg-yellow-900/10 text-yellow-500/70 border-yellow-900/20"
               )}>
                 {status}

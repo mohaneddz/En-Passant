@@ -147,11 +147,11 @@ Deno.serve(async (req) => {
         result: p.result || 'scheduled'
     }))
 
-    // const { error: insertError } = await supabase
-    //     .from('games')
-    //     .insert(gamesToInsert)
+    const { error: insertError } = await supabase
+        .from('games')
+        .insert(gamesToInsert)
 
-    // if (insertError) throw insertError
+    if (insertError) throw insertError
 
     return new Response(
       JSON.stringify({ success: true, round: newRound, pairings: gamesToInsert }),

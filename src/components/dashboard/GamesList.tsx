@@ -2,17 +2,19 @@ import { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { ChevronLeft, ChevronRight, Swords } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import GameAdminCard from '@/components/dashboard/GameAdminCard';
+import { updateGameResult } from '@/lib/api';
 
 interface GamesListProps {
   rounds: any[];
   onValidateRound?: (roundId: string, results: any[]) => void;
+  onGameUpdate?: () => void;
 }
 
 export interface GamesListRef {
   triggerValidation: () => void;
 }
 
-const GamesList = forwardRef<GamesListRef, GamesListProps>(({ rounds, onValidateRound }, ref) => {
+const GamesList = forwardRef<GamesListRef, GamesListProps>(({ rounds, onValidateRound, onGameUpdate }, ref) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedResults, setSelectedResults] = useState<Record<number, string>>({});
 
@@ -31,7 +33,7 @@ const GamesList = forwardRef<GamesListRef, GamesListProps>(({ rounds, onValidate
   // Initialize to the active round or the last round
   useEffect(() => {
     if (rounds && rounds.length > 0) {
-      const activeIndex = rounds.findIndex(r => r.status === 'In progress');
+      const activeIndex = rounds.findIndex(r => r.status === 'In progress' || r.status === 'active');
       if (activeIndex !== -1) {
         setCurrentIndex(activeIndex);
       } else {
@@ -64,6 +66,7 @@ const GamesList = forwardRef<GamesListRef, GamesListProps>(({ rounds, onValidate
   }
 
   const currentRound = rounds[currentIndex];
+  // console.log("Current Round:", currentRound);
 
   // Fix for undefined currentRound
   if (!currentRound) {
@@ -82,8 +85,28 @@ const GamesList = forwardRef<GamesListRef, GamesListProps>(({ rounds, onValidate
     if (currentIndex > 0) setCurrentIndex(prev => prev - 1);
   };
 
-  const handleResultSelect = (gameIndex: number, result: string) => {
+  const handleResultSelect = async (gameIndex: number, result: string) => {
     setSelectedResults(prev => ({ ...prev, [gameIndex]: result }));
+
+    if (currentRound && currentRound.games && currentRound.games[gameIndex]) {
+      const game = currentRound.games[gameIndex];
+      // Map UI result to DB result format
+      let dbResult: "white_wins" | "black_wins" | "draw" | "bye" | "scheduled" = "scheduled";
+
+      if (result === '1-0') dbResult = 'white_wins';
+      else if (result === '0-1') dbResult = 'black_wins';
+      else if (result === '0.5-0.5') dbResult = 'draw';
+      else if (result === 'bye') dbResult = 'bye';
+      
+      try {
+        await updateGameResult(game.id, dbResult);
+        if (onGameUpdate) {
+          onGameUpdate();
+        }
+      } catch (error) {
+        console.error("Failed to update game result:", error);
+      }
+    }
   };
 
   return (
@@ -105,7 +128,7 @@ const GamesList = forwardRef<GamesListRef, GamesListProps>(({ rounds, onValidate
             <span className="font-bold uppercase tracking-wider text-sm">{currentRound.label || `Round ${currentIndex + 1}`}</span>
           </div>
           <span className={`text-[10px] uppercase tracking-widest px-2 py-0.5 rounded-full font-semibold ${
-            currentRound.status === 'In progress' 
+            currentRound.status === 'In progress' || currentRound.status === 'active'
               ? 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20' 
               : 'bg-gray-800 text-gray-400 border border-gray-700'
           }`}>
@@ -128,11 +151,11 @@ const GamesList = forwardRef<GamesListRef, GamesListProps>(({ rounds, onValidate
         {currentRound.games?.map((game: any, index: number) => (
           <GameAdminCard
             key={index}
-            gameNumber={game.gameNumber}
+            gameNumber={game.gameNumber || index + 1}
             whitePlayer={game.whitePlayer}
             blackPlayer={game.blackPlayer}
             status={game.status}
-            isEditable={currentRound.status === 'In progress'}
+            isEditable={currentRound.is_current || currentRound.status === 'pending' || currentRound.status === 'active'}
             selectedResult={selectedResults[index]}
             onSelectResult={(result) => handleResultSelect(index, result)}
           />

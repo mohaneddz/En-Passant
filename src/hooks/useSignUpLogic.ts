@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase/client";
 
 export function useSignUpLogic() {
@@ -9,6 +9,18 @@ export function useSignUpLogic() {
   const [showPassword, setShowPassword] = useState(false);
   const [isAccountExists, setIsAccountExists] = useState(false);
 
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error) {
+        console.error('Error fetching user:', error);
+      } else {
+        console.log('User data on load:', user);
+      }
+    };
+    fetchUser();
+  }, []);
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -16,11 +28,12 @@ export function useSignUpLogic() {
     setIsAccountExists(false);
     try {
       const { data, error } = await supabase.auth.signUp({ email, password });
+      console.log('SignUp response:', data, error);
       if (error) {
         // Check if the error indicates the account already exists
         if (error.message.toLowerCase().includes("already") || error.message.toLowerCase().includes("registered")) {
           setIsAccountExists(true);
-          setMessage("Account already exists. Please sign in instead.");
+          setMessage("User already exists");
         } else {
           setMessage(error.message);
         }

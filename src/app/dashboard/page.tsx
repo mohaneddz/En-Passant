@@ -8,8 +8,7 @@ import AddPlayerForm from '@/components/dashboard/AddPlayerForm';
 import PlayersTable from '@/components/dashboard/PlayersTable';
 import GamesList, { GamesListRef } from '@/components/dashboard/GamesList';
 
-import { getPlayers, addPlayer, deletePlayer, LeaderboardView, getStats } from '@/lib/api';
-import { getRounds } from '@/server/rounds';
+import { getPlayers, addPlayer, deletePlayer, getStats, createRound, deleteLastRound, updateRoundStatus, getRounds, getGames } from '@/lib/api';
 
 import SimpleDialog from '@/components/SimpleDialog';
 
@@ -29,10 +28,8 @@ export default function ChessDashboard() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [rounds, setRounds] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isRoundValidated, setIsRoundValidated] = useState(false);
 
   // Dialog states
-  const [showValidateDialog, setShowValidateDialog] = useState(false);
   const [showNextPhaseDialog, setShowNextPhaseDialog] = useState(false);
   const [showUndoDialog, setShowUndoDialog] = useState(false);
 
@@ -44,14 +41,6 @@ export default function ChessDashboard() {
     gamesPlayed: null,
     currentRound: null,
   })
-
-  async function validateRound(){
-    setIsRoundValidated(true);
-  }
-  
-  async function unvalidateRound(){
-    setIsRoundValidated(false);
-  }
 
   const fetchStats = async () => {
     try {
@@ -67,8 +56,25 @@ export default function ChessDashboard() {
 
   const fetchRounds = async () => {
     try {
-      const data = await getRounds();
-      setRounds(data);
+      const roundsData = await getRounds();
+      
+      // Fetch games for each round to populate the UI
+      const roundsWithGames = await Promise.all(roundsData.map(async (round) => {
+        const games = await getGames(round.id);
+        return {
+          ...round,
+          games: games.map((g, index) => ({
+            id: g.id,
+            gameNumber: index + 1,
+            whitePlayer: g.white_player?.name || 'Unknown',
+            blackPlayer: g.black_player?.name || 'Unknown',
+            result: g.result,
+            status: g.result ? g.result.replace('_', ' ') : 'scheduled'
+          }))
+        };
+      }));
+
+      setRounds(roundsWithGames);
     } catch (error) {
       console.error('Error fetching rounds:', error);
     }
@@ -91,19 +97,10 @@ export default function ChessDashboard() {
     fetchRounds();
   }, []);
 
-  useEffect(() => {
-    if (rounds.length > 0) {
-      const last = rounds[rounds.length - 1];
-      setIsRoundValidated(last.status !== 'In progress');
-    } else {
-      setIsRoundValidated(false);
-    }
-  }, [rounds]);
-
   // Determine round status for button states
   const lastRound = rounds.length > 0 ? rounds[rounds.length - 1] : null;
 
-  const isNextPhaseDisabled = rounds.length > 0 && !isRoundValidated;
+  const isNextPhaseDisabled = false;
 
   const handleAddPlayer = async (newPlayer: { name: string }) => {
     try {
@@ -123,53 +120,67 @@ export default function ChessDashboard() {
     }
   };
 
-  const handleValidateRound = async (roundId: string, results: any[]) => {
-    try {
-      // await validateRound(roundId, results);
-      await validateRound();
-      // await fetchStats();
-      // await fetchRounds();
-      setShowValidateDialog(false);
-    } catch (error) {
-      console.error('Error validating round:', error);
-    }
-  };
-
-  const handleUnvalidateRound = async () => {
-    try {
-      console.log("Unvalidating round...");
-      if (lastRound) {
-        // await unvalidateRound(lastRound.id);
-        await unvalidateRound();
-        // no logic so far, we keep it simple
-        // await fetchStats();
-        // await fetchRounds();
-        setShowValidateDialog(false);
-      }
-    } catch (error) {
-      console.error('Error unvalidating round:', error);
-    }
-  };
-
   const handleNextPhase = async () => {
     try {
-      // no logic so far, we keep it simple
-      // await generatePairings();
-      // await fetchStats();
-      // await fetchRounds();
+      setLoading(true);
+
+      // 0. Mark current round as completed if it exists
+      if (rounds.length > 0) {
+        const currentActiveRound = rounds.find(r => r.status === 'In progress');
+        if (currentActiveRound) {
+          await updateRoundStatus(currentActiveRound.id, 'Completed');
+        }
+      }
+
+      // 1. Calculate next round number
+      const nextRoundNum = (stats.totalRounds || 0) + 1;
+      
+      // 2. Create the round in DB
+      const newRound = await createRound(nextRoundNum);
+      
+      if (!newRound) {
+        throw new Error("Failed to create round");
+      }
+
+      // 3. Call the pairing API
+      const response = await fetch('/generate-pairing', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          roundNumber: nextRoundNum, 
+          roundId: newRound.id 
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to generate pairings");
+      }
+
+      // 4. Refresh data
+      await fetchStats();
+      await fetchRounds();
+      setActiveTab('games'); // Switch to games tab to see new pairings
     } catch (error) {
       console.error('Error starting next phase:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleUndoPhase = async () => {
     try {
-      // await undoLastPhase();
-      // await fetchStats();
-      // await fetchRounds();
+      setLoading(true);
+      await deleteLastRound();
+      await fetchStats();
+      await fetchRounds();
       console.log("Undo triggered");
     } catch (error) {
       console.error('Error undoing phase:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -183,34 +194,12 @@ export default function ChessDashboard() {
         <TabNavigation
           activeTab={activeTab}
           setActiveTab={setActiveTab}
-          onValidate={() => setShowValidateDialog(true)}
           onNextPhase={() => setShowNextPhaseDialog(true)}
           onUndo={() => setShowUndoDialog(true)}
           nextPhaseDisabled={isNextPhaseDisabled}
-          isRoundValidated={isRoundValidated}
         />
 
         {/* Dialogs moved here to be accessible from any tab */}
-        <SimpleDialog
-          isOpen={showValidateDialog}
-          onClose={() => setShowValidateDialog(false)}
-          onConfirm={() => {
-            if (isRoundValidated) {
-              unvalidateRound();
-            } else {
-              validateRound();
-              gamesListRef.current?.triggerValidation();
-            }
-          }}
-          title={isRoundValidated ? "Unvalidate Round?" : "Validate Round?"}
-          description={isRoundValidated 
-            ? "This will unlock the round for editing. Rankings might change." 
-            : "This will lock the current results and update player scores."
-          }
-          confirmText={isRoundValidated ? "Unvalidate" : "Validate"}
-          confirmColor={isRoundValidated ? "bg-red-600 hover:bg-red-700" : "bg-green-600 hover:bg-green-700"}
-        />
-
         <SimpleDialog
           isOpen={showNextPhaseDialog}
           onClose={() => setShowNextPhaseDialog(false)}
@@ -246,7 +235,10 @@ export default function ChessDashboard() {
             <GamesList
               ref={gamesListRef}
               rounds={rounds}
-              onValidateRound={handleValidateRound}
+              onGameUpdate={() => {
+                fetchStats();
+                fetchRounds();
+              }}
             />
           </div>
         )}

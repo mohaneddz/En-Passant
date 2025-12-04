@@ -25,7 +25,7 @@ export default function SimpleDialog({ isOpen, onClose, onConfirm, title, descri
               onConfirm();
               onClose();
             }}
-            className={`px-4 py-2 text-sm font-medium text-white rounded transition-colors ${confirmColor}`}
+            className={`px-4 py-2 text-sm font-medium text-black rounded transition-colors cursor-pointer ${confirmColor}`}
           >
             {confirmText}
           </button>

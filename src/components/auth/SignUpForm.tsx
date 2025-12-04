@@ -1,11 +1,12 @@
 "use client";
-import React from "react";
+import React, { useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSignUpLogic } from "@/hooks/useSignUpLogic";
+import { useRouter } from "next/navigation";
 
 export default function SignUpForm() {
   const {
@@ -20,6 +21,16 @@ export default function SignUpForm() {
     isAccountExists,
     handleSignUp,
   } = useSignUpLogic();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (message === "Check your email to confirm your account.") {
+      const timer = setTimeout(() => {
+        router.push('/login');
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [message, router]);
 
   return (
     <div className="w-full max-w-md p-8 rounded-xl border border-[#C5A059] bg-[#1A1A1A] text-white shadow-2xl mx-auto">
