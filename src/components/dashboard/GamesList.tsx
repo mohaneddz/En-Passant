@@ -1,8 +1,8 @@
-import { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
+import { forwardRef, useImperativeHandle } from 'react';
 import { ChevronLeft, ChevronRight, Swords } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import GameAdminCard from '@/components/dashboard/GameAdminCard';
-import { updateGameResult } from '@/lib/api';
+import { useGamesList } from '@/hooks/useGamesList';
 
 interface GamesListProps {
   rounds: any[];
@@ -15,8 +15,7 @@ export interface GamesListRef {
 }
 
 const GamesList = forwardRef<GamesListRef, GamesListProps>(({ rounds, onValidateRound, onGameUpdate }, ref) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [selectedResults, setSelectedResults] = useState<Record<number, string>>({});
+  const { currentIndex, selectedResults, nextRound, prevRound, handleResultSelect } = useGamesList(rounds, onGameUpdate);
 
   useImperativeHandle(ref, () => ({
     triggerValidation: () => {
@@ -30,33 +29,6 @@ const GamesList = forwardRef<GamesListRef, GamesListProps>(({ rounds, onValidate
     }
   }));
 
-  // Initialize to the active round or the last round
-  useEffect(() => {
-    if (rounds && rounds.length > 0) {
-      const activeIndex = rounds.findIndex(r => r.status === 'In progress' || r.status === 'active');
-      if (activeIndex !== -1) {
-        setCurrentIndex(activeIndex);
-      } else {
-        setCurrentIndex(rounds.length - 1);
-      }
-    }
-  }, [rounds]);
-
-  // Reset selections when round changes and pre-fill existing results
-  useEffect(() => {
-    const initialResults: Record<number, string> = {};
-    if (rounds[currentIndex]?.games) {
-        rounds[currentIndex].games.forEach((game: any, index: number) => {
-            const s = game.status?.toLowerCase();
-            if (s === 'white wins' || s === '1-0') initialResults[index] = '1-0';
-            else if (s === 'black wins' || s === '0-1') initialResults[index] = '0-1';
-            else if (s === 'draw' || s === '1/2-1/2') initialResults[index] = '0.5-0.5';
-            else if (s === 'bye') initialResults[index] = 'bye';
-        });
-    }
-    setSelectedResults(initialResults);
-  }, [currentIndex, rounds]);
-
   if (!rounds || rounds.length === 0) {
     return (
       <div className="bg-[#1a1a1a] border border-[#333] rounded-xl p-12 text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -66,7 +38,7 @@ const GamesList = forwardRef<GamesListRef, GamesListProps>(({ rounds, onValidate
   }
 
   const currentRound = rounds[currentIndex];
-  // console.log("Current Round:", currentRound);
+  console.log("Current Round:", currentRound);
 
   // Fix for undefined currentRound
   if (!currentRound) {
@@ -76,38 +48,6 @@ const GamesList = forwardRef<GamesListRef, GamesListProps>(({ rounds, onValidate
       </div>
     );
   }
-
-  const nextRound = () => {
-    if (currentIndex < rounds.length - 1) setCurrentIndex(prev => prev + 1);
-  };
-
-  const prevRound = () => {
-    if (currentIndex > 0) setCurrentIndex(prev => prev - 1);
-  };
-
-  const handleResultSelect = async (gameIndex: number, result: string) => {
-    setSelectedResults(prev => ({ ...prev, [gameIndex]: result }));
-
-    if (currentRound && currentRound.games && currentRound.games[gameIndex]) {
-      const game = currentRound.games[gameIndex];
-      // Map UI result to DB result format
-      let dbResult: "white_wins" | "black_wins" | "draw" | "bye" | "scheduled" = "scheduled";
-
-      if (result === '1-0') dbResult = 'white_wins';
-      else if (result === '0-1') dbResult = 'black_wins';
-      else if (result === '0.5-0.5') dbResult = 'draw';
-      else if (result === 'bye') dbResult = 'bye';
-      
-      try {
-        await updateGameResult(game.id, dbResult);
-        if (onGameUpdate) {
-          onGameUpdate();
-        }
-      } catch (error) {
-        console.error("Failed to update game result:", error);
-      }
-    }
-  };
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-7xl mx-auto pb-20">

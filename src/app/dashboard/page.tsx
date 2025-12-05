@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
+import { useDashboard } from '@/hooks/useDashboard';
+
 import Header from '@/components/dashboard/Header';
 import StatsGrid from '@/components/dashboard/StatsGrid';
 import TabNavigation from '@/components/dashboard/TabNavigation';
@@ -8,181 +9,30 @@ import AddPlayerForm from '@/components/dashboard/AddPlayerForm';
 import PlayersTable from '@/components/dashboard/PlayersTable';
 import GamesList, { GamesListRef } from '@/components/dashboard/GamesList';
 
-import { getPlayers, addPlayer, deletePlayer, getStats, createRound, deleteLastRound, updateRoundStatus, getRounds, getGames } from '@/lib/api';
-
 import SimpleDialog from '@/components/SimpleDialog';
 
-interface Player {
-  id: string;
-  name: string;
-  points: number;
-  buchholz: number;
-  wins: number;
-  losses: number;
-  draws: number;
-}
-
 export default function ChessDashboard() {
-
-  const [activeTab, setActiveTab] = useState('players');
-  const [players, setPlayers] = useState<Player[]>([]);
-  const [rounds, setRounds] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  // Dialog states
-  const [showNextPhaseDialog, setShowNextPhaseDialog] = useState(false);
-  const [showUndoDialog, setShowUndoDialog] = useState(false);
-
-  const gamesListRef = useRef<GamesListRef>(null);
-
-  const [stats, setStats] = useState<{ totalPlayers: number | null, totalRounds: number | null, gamesPlayed: number | null, currentRound: number | null }>({
-    totalPlayers: null,
-    totalRounds: null,
-    gamesPlayed: null,
-    currentRound: null,
-  })
-
-  const fetchStats = async () => {
-    try {
-      const data = await getStats();
-      setStats({
-        ...data,
-        currentRound: data.currentRound ?? null
-      });
-    } catch (error) {
-      console.error('Error fetching stats:', error);
-    }
-  }
-
-  const fetchRounds = async () => {
-    try {
-      const roundsData = await getRounds();
-      
-      // Fetch games for each round to populate the UI
-      const roundsWithGames = await Promise.all(roundsData.map(async (round) => {
-        const games = await getGames(round.id);
-        return {
-          ...round,
-          games: games.map((g, index) => ({
-            id: g.id,
-            gameNumber: index + 1,
-            whitePlayer: g.white_player?.name || 'Unknown',
-            blackPlayer: g.black_player?.name || 'Unknown',
-            result: g.result,
-            status: g.result ? g.result.replace('_', ' ') : 'scheduled'
-          }))
-        };
-      }));
-
-      setRounds(roundsWithGames);
-    } catch (error) {
-      console.error('Error fetching rounds:', error);
-    }
-  };
-
-  const fetchPlayers = async () => {
-    try {
-      const data = await getPlayers();
-      setPlayers(data as unknown as Player[]);
-    } catch (error) {
-      console.error('Error fetching players:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchPlayers();
-    fetchStats();
-    fetchRounds();
-  }, []);
-
-  // Determine round status for button states
-  const lastRound = rounds.length > 0 ? rounds[rounds.length - 1] : null;
-
-  const isNextPhaseDisabled = false;
-
-  const handleAddPlayer = async (newPlayer: { name: string }) => {
-    try {
-      await addPlayer(newPlayer.name);
-      await fetchPlayers(); // Refresh list
-    } catch (error) {
-      console.error('Error adding player:', error);
-    }
-  };
-
-  const handleDeletePlayer = async (id: string) => {
-    try {
-      await deletePlayer(id);
-      await fetchPlayers(); // Refresh list
-    } catch (error) {
-      console.error('Error deleting player:', error);
-    }
-  };
-
-  const handleNextPhase = async () => {
-    try {
-      setLoading(true);
-
-      // 0. Mark current round as completed if it exists
-      if (rounds.length > 0) {
-        const currentActiveRound = rounds.find(r => r.status === 'Active');
-        if (currentActiveRound) {
-          await updateRoundStatus(currentActiveRound.id, 'Completed');
-        }
-      }
-
-      // 1. Calculate next round number
-      const nextRoundNum = (stats.totalRounds || 0) + 1;
-      
-      // 2. Create the round in DB
-      const newRound = await createRound(nextRoundNum);
-      
-      if (!newRound) {
-        throw new Error("Failed to create round");
-      }
-
-      // 3. Call the pairing API
-      const response = await fetch('/generate-pairing', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          roundNumber: nextRoundNum, 
-          roundId: newRound.id 
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to generate pairings");
-      }
-
-      // 4. Refresh data
-      await fetchStats();
-      await fetchRounds();
-      setActiveTab('games'); // Switch to games tab to see new pairings
-    } catch (error) {
-      console.error('Error starting next phase:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleUndoPhase = async () => {
-    try {
-      setLoading(true);
-      await deleteLastRound();
-      await fetchStats();
-      await fetchRounds();
-      console.log("Undo triggered");
-    } catch (error) {
-      console.error('Error undoing phase:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const {
+    activeTab,
+    setActiveTab,
+    players,
+    rounds,
+    loading,
+    showNextPhaseDialog,
+    setShowNextPhaseDialog,
+    showUndoDialog,
+    setShowUndoDialog,
+    gamesListRef,
+    stats,
+    isNextPhaseDisabled,
+    handleAddPlayer,
+    handleDeletePlayer,
+    handleNextPhase,
+    handleUndoPhase,
+    fetchPlayers,
+    fetchStats,
+    fetchRounds,
+  } = useDashboard();
 
   return (
     <div className="min-h-screen bg-[#111]">
@@ -226,6 +76,7 @@ export default function ChessDashboard() {
             <PlayersTable
               players={players}
               onDelete={handleDeletePlayer}
+              onRefresh={fetchPlayers}
             />
           </div>
         )}

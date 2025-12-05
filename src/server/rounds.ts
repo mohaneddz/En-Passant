@@ -24,7 +24,7 @@ export async function getRounds() {
     const result = data.map((round) => ({
         id: round.id,
         label: `Round ${round.round_number}`,
-        status: mapRoundStatus(round.status),
+        status: round.status,
         games: round.games.map((game: any, index: number) => {
             const { text, color } = mapGameResult(game.result);
             return {
@@ -37,14 +37,6 @@ export async function getRounds() {
         })
     }));
     return result;
-}
-
-function mapRoundStatus(status: string | null) {
-    switch (status) {
-        case 'active': return 'In progress';
-        case 'completed': return 'Completed';
-        default: return 'Upcoming';
-    }
 }
 
 function mapGameResult(result: string | null) {

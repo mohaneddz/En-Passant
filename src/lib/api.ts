@@ -1,9 +1,8 @@
-// BUT HERE THE OTHER METHOD WITH NO API???
 import { supabase } from '@/lib/supabase/client';
 import { Database } from '@/lib/supabase/database.types';
 
 export type Player = Database['public']['Tables']['players']['Row'];
-export type Leaderboard = Database['public']['Tables']['leaderboard']['Row']
+export type Leaderboard = Database['public']['Views']['leaderboard']['Row']
 export type Round = Database['public']['Tables']['rounds']['Row'];
 export type Game = Database['public']['Tables']['games']['Row'];
 
@@ -106,12 +105,13 @@ export const createRound = async (roundNumber: number) => {
 export const getCurrentRound = async () => {
   const { data, error } = await supabase
     .from('rounds')
-    .select('*')
-    .eq('is_current', true)
+    .select('round_number')
+    .order('round_number', { ascending: false })
+    .limit(1)
     .maybeSingle();
   
   if (error) throw error;
-  return data;
+  return data?.round_number || 0;
 };
 
 // --- Games ---
@@ -169,7 +169,7 @@ export const getStats = async () => {
     totalPlayers,
     totalRounds,
     gamesPlayed,
-    currentRound: currentRound?.round_number
+    currentRound
   };
 };
 
