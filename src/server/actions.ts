@@ -136,19 +136,6 @@ export async function generateNextRound() {
       if (insertError) throw insertError;
     }
 
-    // Notify the API route to generate pairings
-    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/generate-pairing`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ roundNumber: nextRoundNumber }),
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to notify pairing generation');
-    }
-
     revalidatePath('/dashboard');
     return { success: true, message: `Round ${nextRoundNumber} created successfully` };
 

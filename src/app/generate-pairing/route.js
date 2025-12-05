@@ -2,9 +2,23 @@
 import { createServerSideClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
+// HINT: The error "Failed to parse URL from undefined/generate-pairing" is in the code calling this route.
+// It implies a missing base URL variable. If calling from the client, use a relative path: fetch('/generate-pairing', ...)
+
 export async function POST(req) {
   const supabase = createServerSideClient();
-  const { roundNumber } = await req.json();
+  
+  // Safely parse body
+  const body = await req.json().catch(() => ({}));
+  console.log("Received body:", body);
+  const { roundNumber } = body;
+
+  if (!roundNumber) {
+    console.error("Missing roundNumber in request");
+    return NextResponse.json({ error: "Missing roundNumber" }, { status: 400 });
+  }
+
+  console.log(`Starting pairing generation for Round ${roundNumber}`);
 
   // Update all existing rounds to not current and completed
   await supabase
@@ -12,28 +26,37 @@ export async function POST(req) {
     .update({ is_current: false, status: 'completed' });
 
   // Create new round
+  console.log("Creating new round...");
   const { data: newRound, error: roundError } = await supabase
     .from('rounds')
     .insert([{ round_number: roundNumber, is_current: true, status: 'active' }])
     .select()
     .single();
 
-  if (roundError)
-    return new Response(JSON.stringify({ error: roundError }), { status: 400 });
+  if (roundError) {
+    console.error("Error creating round:", roundError);
+    return NextResponse.json({ error: roundError }, { status: 400 });
+  }
 
   const roundId = newRound.id;
+  console.log(`New round created with ID: ${roundId}`);
 
   // 2. Fetch Players
   // If Round 1: Just get active players
   // If Round 2+: Get players sorted by Score (from the leaderboard view)
+  console.log("Fetching players from leaderboard...");
   let { data: players, error: pError } = await supabase
     .from("leaderboard")
     .select("*")
     .eq("is_active", true) // Only pair active players
     .order("points", { ascending: false }); // Higher scores first (Swiss rule)
 
-  if (pError)
-    return new Response(JSON.stringify({ error: pError }), { status: 400 });
+  if (pError) {
+    console.error("Error fetching players:", pError);
+    return NextResponse.json({ error: pError }, { status: 400 });
+  }
+  
+  console.log(`Fetched ${players.length} active players.`);
 
   // 3. Handle Odd Numbers (The Bye)
   let byePlayer = null;
@@ -42,9 +65,11 @@ export async function POST(req) {
     // BUT we must check if they already had a bye.
     // (For simplicity here, we just take the last player in the list)
     byePlayer = players.pop();
+    console.log(`Odd number of players. Bye assigned to: ${byePlayer.id}`);
   }
 
   // 4. Fetch Previous Games (To avoid repeats)
+  console.log("Fetching game history...");
   const { data: history } = await supabase
     .from("games")
     .select("white_player_id, black_player_id");
@@ -57,11 +82,13 @@ export async function POST(req) {
   });
 
   // 5. The Pairing Algorithm
+  console.log("Starting pairing algorithm...");
   const pairings = [];
   const assigned = new Set();
 
   // If Round 1, Shuffle randomly first (Optional, but recommended)
   if (roundNumber === 1) {
+    console.log("Round 1: Shuffling players randomly.");
     players.sort(() => Math.random() - 0.5);
   }
 
@@ -81,6 +108,7 @@ export async function POST(req) {
       const pairKey = `${p1.id}-${p2.id}`;
       if (!playedSet.has(pairKey)) {
         // Valid Pairing Found
+        console.log(`Pairing found: ${p1.id} vs ${p2.id}`);
         pairings.push({
           round_id: roundId,
           white_player_id: p1.id,
@@ -95,8 +123,9 @@ export async function POST(req) {
     }
 
     // Fallback: If p1 matches nobody (rare in huge pools, possible in small ones),
-    // specific Swiss logic requires complex backtracking.
-    // For this MVP, you might need a "force pair" or manual intervention flag.
+    if (!paired) {
+        console.warn(`Could not find a valid opponent for player ${p1.id}`);
+    }
   }
 
   // 6. Add the Bye (if exists)
@@ -109,14 +138,17 @@ export async function POST(req) {
     });
   }
 
+  console.log(`Generated ${pairings.length} pairings. Inserting into DB...`);
+
   // 7. Insert into DB
   const { error: insertError } = await supabase
     .from('games')
     .insert(pairings);
-  if (insertError) return new Response(JSON.stringify({ success: false, error: insertError }), {
-    headers: { "Content-Type": "application/json" },
-  });
-  return new Response(JSON.stringify({ success: true, roundId }), {
-    headers: { "Content-Type": "application/json" },
-  });
+  if (insertError) {
+    console.error("Error inserting pairings:", insertError);
+    return NextResponse.json({ success: false, error: insertError }, { status: 500 });
+  }
+  
+  console.log("Pairings inserted successfully.");
+  return NextResponse.json({ success: true, roundId });
 }
