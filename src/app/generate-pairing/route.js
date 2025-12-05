@@ -1,36 +1,37 @@
 // supabase/functions/generate-pairings/index.ts
 import { supabase } from "@/lib/supabase/client";
 export async function POST(req) {
-  const { roundNumber, roundId } = await req.json()
+  const { roundNumber, roundId } = await req.json();
 
   // 2. Fetch Players
   // If Round 1: Just get active players
   // If Round 2+: Get players sorted by Score (from the leaderboard view)
   let { data: players, error: pError } = await supabase
-    .from('leaderboard') 
-    .select('*')
-    .eq('is_active', true) // Only pair active players
-    .order('score', { ascending: false }) // Higher scores first (Swiss rule)
-    
-  if (pError) return new Response(JSON.stringify({ error: pError }), { status: 400 })
+    .from("leaderboard")
+    .select("*")
+    .eq("is_active", true) // Only pair active players
+    .order("points", { ascending: false }); // Higher scores first (Swiss rule)
+
+  if (pError)
+    return new Response(JSON.stringify({ error: pError }), { status: 400 });
 
   // 3. Handle Odd Numbers (The Bye)
   let byePlayer = null;
   if (players.length % 2 !== 0) {
-    // In Swiss, the lowest ranked player gets the bye, 
+    // In Swiss, the lowest ranked player gets the bye,
     // BUT we must check if they already had a bye.
     // (For simplicity here, we just take the last player in the list)
-    byePlayer = players.pop(); 
+    byePlayer = players.pop();
   }
 
   // 4. Fetch Previous Games (To avoid repeats)
   const { data: history } = await supabase
-    .from('games')
-    .select('white_player_id, black_player_id')
-  
+    .from("games")
+    .select("white_player_id, black_player_id");
+
   // Create a Set of "p1-p2" strings for fast lookup
   const playedSet = new Set();
-  history?.forEach(g => {
+  history?.forEach((g) => {
     playedSet.add(`${g.white_player_id}-${g.black_player_id}`);
     playedSet.add(`${g.black_player_id}-${g.white_player_id}`);
   });
@@ -55,21 +56,20 @@ export async function POST(req) {
       if (assigned.has(players[j].id)) continue;
 
       const p2 = players[j];
-      
+
       // Check if they played before
       const pairKey = `${p1.id}-${p2.id}`;
       if (!playedSet.has(pairKey)) {
         // Valid Pairing Found
         pairings.push({
-          round_id: roundId, 
-          white_player_id: p1.id, 
+          round_id: roundId,
+          white_player_id: p1.id,
           black_player_id: p2.id,
           white_name: p1.name,
           black_name: p2.name,
-          white_score: p1.score,
-          black_score: p2.score,
-          result: Math.random() > 0.5 ? 'white_wins' : 'black_wins',
-          
+          white_score: p1.points,
+          black_score: p2.points,
+          result: Math.random() > 0.5 ? "white_wins" : "black_wins",
         });
         assigned.add(p1.id);
         assigned.add(p2.id);
@@ -77,9 +77,9 @@ export async function POST(req) {
         break;
       }
     }
-    
+
     // Fallback: If p1 matches nobody (rare in huge pools, possible in small ones),
-    // specific Swiss logic requires complex backtracking. 
+    // specific Swiss logic requires complex backtracking.
     // For this MVP, you might need a "force pair" or manual intervention flag.
   }
 
@@ -88,19 +88,19 @@ export async function POST(req) {
     pairings.push({
       round_id: roundId,
       white_player_id: byePlayer.id,
-      black_player_id: null, 
-      result: 'bye'
+      black_player_id: null,
+      result: "bye",
     });
   }
 
-//   7. Insert into DB
-//   const { error: insertError } = await supabase
-//     .from('games')
-//     .insert(pairings)
-//   if(insertError) return new Response(JSON.stringify({ success: false, error: insertError }), {
-//     headers: { "Content-Type": "application/json" },
-//   })
+  //   7. Insert into DB
+  //   const { error: insertError } = await supabase
+  //     .from('games')
+  //     .insert(pairings)
+  //   if(insertError) return new Response(JSON.stringify({ success: false, error: insertError }), {
+  //     headers: { "Content-Type": "application/json" },
+  //   })
   return new Response(JSON.stringify({ success: true, pairings }), {
     headers: { "Content-Type": "application/json" },
-  })
+  });
 }

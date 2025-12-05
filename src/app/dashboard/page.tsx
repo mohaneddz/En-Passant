@@ -10,6 +10,7 @@ import GamesList, { GamesListRef } from '@/components/dashboard/GamesList';
 
 import { getPlayers, addPlayer, deletePlayer, LeaderboardView, getStats } from '@/lib/api';
 import { getRounds } from '@/server/rounds';
+import { generateNextRound, undoLastRound } from '@/server/actions';
 
 import SimpleDialog from '@/components/SimpleDialog';
 
@@ -153,23 +154,38 @@ export default function ChessDashboard() {
 
   const handleNextPhase = async () => {
     try {
-      // no logic so far, we keep it simple
-      // await generatePairings();
-      // await fetchStats();
-      // await fetchRounds();
+      setLoading(true);
+      const result = await generateNextRound();
+      if (result.success) {
+        await fetchStats();
+        await fetchRounds();
+        setShowNextPhaseDialog(false);
+      } else {
+        console.error('Error starting next phase:', result.error);
+        // Ideally show a toast or error message here
+      }
     } catch (error) {
       console.error('Error starting next phase:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleUndoPhase = async () => {
     try {
-      // await undoLastPhase();
-      // await fetchStats();
-      // await fetchRounds();
-      console.log("Undo triggered");
+      setLoading(true);
+      const result = await undoLastRound();
+      if (result.success) {
+        await fetchStats();
+        await fetchRounds();
+        setShowUndoDialog(false);
+      } else {
+        console.error('Error undoing phase:', result.error);
+      }
     } catch (error) {
       console.error('Error undoing phase:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
