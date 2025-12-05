@@ -83,7 +83,7 @@ function TabsTrigger({
       {isActive && (
         <motion.div
           layoutId="active-tab-indicator"
-          className={cn("absolute inset-0 z-[-1] rounded-md bg-background shadow-sm", activeClassName)}
+          className={cn("absolute inset-0 z-[-1] rounded-md shadow-sm", activeClassName)}
           transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
         />
       )}

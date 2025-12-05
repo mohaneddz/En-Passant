@@ -4,41 +4,30 @@ import { MedalIcon } from "@/components/MedalIcon";
 import { getLeaderboard } from "@/server/leaderboard";
 import { useEffect, useState } from "react";
 
-interface Player {
-  rank: number;
-  name: string;
-  points: number;
-  wins: number;
-  draws: number;
-  losses: number;
-}
+import type { Player } from "@/types/player";
 
 export default function LeaderboardPage() {
-  
+
   const [players, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchLeaderboard = async () => {
+    const loadData = async () => {
       try {
         const data = await getLeaderboard();
-        // Assuming the data returned needs to be mapped to include rank if not present, 
-        // or just used directly if the server returns it. 
-        // Here we map it to ensure rank exists based on index if the DB doesn't store it explicitly.
-        const rankedData = data.map((player: any, index: number) => ({
-          ...player,
-          rank: index + 1
-        }));
-        setPlayers(rankedData);
-      } catch (err: any) {
-        setError(err.message);
+        // Sort by score descending
+        const sorted = data.sort((a, b) => (b.score || 0) - (a.score || 0));
+        // Assign rank
+        const ranked = sorted.map((p, i) => ({ ...p, rank: i + 1 }));
+        setPlayers(ranked);
+      } catch (err) {
+        setError("Failed to load leaderboard");
       } finally {
         setLoading(false);
       }
     };
-
-    fetchLeaderboard();
+    loadData();
   }, []);
 
   if (loading) return <div className="min-h-screen text-white p-10 flex items-center justify-center">Loading...</div>;
@@ -46,7 +35,7 @@ export default function LeaderboardPage() {
 
   return (
     <div className="min-h-screen text-white p-10 font-sans flex flex-col items-center">
-      
+
       {/* Header */}
       <div className="flex flex-col items-center gap-2 mb-20">
         <CrownIcon className="w-16 h-16 text-[#fbbf24] mb-2" />
@@ -56,7 +45,7 @@ export default function LeaderboardPage() {
 
       {/* Table Container */}
       <div className="w-full max-w-5xl bg-[#1a1a1a] rounded-xl border border-[#333] overflow-hidden shadow-2xl">
-        
+
         {/* Table Header */}
         <div className="grid grid-cols-12 gap-4 p-5 border-b border-[#333] text-[#fbbf24] font-semibold text-lg">
           <div className="col-span-2 flex justify-center">Rank</div>
@@ -69,17 +58,19 @@ export default function LeaderboardPage() {
 
         {/* Table Body */}
         <div className="divide-y divide-[#2a2a2a]">
-          {players.map((player) => (
-            <div 
-              key={player.rank} 
-              className={`grid grid-cols-12 gap-4 p-5 items-center text-lg hover:bg-[#252525] transition-colors ${player.rank <= 3 ? 'bg-[#1e1e1e]' : ''}`}
+          {players.map((player) => {
+            const rank = player.rank ?? 0;
+            return (
+            <div
+              key={player.id}
+              className={`grid grid-cols-12 gap-4 p-5 items-center text-lg hover:bg-[#252525] transition-colors ${rank <= 3 ? 'bg-[#1e1e1e]' : ''}`}
             >
               {/* Rank */}
               <div className="col-span-2 flex justify-center">
-                {player.rank <= 3 ? (
-                  <MedalIcon rank={player.rank} />
+                {rank <= 3 ? (
+                  <MedalIcon rank={rank} />
                 ) : (
-                  <span className="font-bold text-white w-8 text-center">{player.rank}</span>
+                  <span className="font-bold text-white w-8 text-center">{rank}</span>
                 )}
               </div>
 
@@ -90,10 +81,10 @@ export default function LeaderboardPage() {
 
               {/* Stats */}
               <div className="col-span-2 text-center font-bold text-[#fbbf24]">
-                {player.points}
+                {player.score}
               </div>
               <div className="col-span-1 text-center font-bold text-green-500">
-                {player.wins}
+                {player.wins + player.byes}
               </div>
               <div className="col-span-2 text-center font-bold text-orange-300">
                 {player.draws}
@@ -102,7 +93,8 @@ export default function LeaderboardPage() {
                 {player.losses}
               </div>
             </div>
-          ))}
+          );
+          })}
         </div>
       </div>
     </div>

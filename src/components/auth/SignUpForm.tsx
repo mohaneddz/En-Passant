@@ -79,7 +79,7 @@ export default function SignUpForm() {
             </button>
           </div>
         </div>
-
+        <p className="text-center opacity-50">Already signed in? <Link href="/login" className="text-[#EBCB6B] hover:underline">Log In</Link></p>
         <Button
           type="submit"
           disabled={loading || isAccountExists}

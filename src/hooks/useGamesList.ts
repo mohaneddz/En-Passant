@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { updateGameResult } from '@/lib/api';
+// import { updateGame } from '@/server/games';
 
 export const useGamesList = (rounds: any[], onGameUpdate?: () => void) => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -55,7 +55,7 @@ export const useGamesList = (rounds: any[], onGameUpdate?: () => void) => {
       else if (result === 'bye') dbResult = 'bye';
 
       try {
-        await updateGameResult(game.id, dbResult);
+        // await updateGameResult(game.id, dbResult);
         if (onGameUpdate) {
           onGameUpdate();
         }

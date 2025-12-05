@@ -3,8 +3,10 @@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
-import Image from "next/image";
 import { useSignInLogic } from "@/hooks/useSignInLogic";
+
+import Link from "next/link";
+import Image from "next/image";
 
 export default function SignInForm() {
   const {
@@ -75,6 +77,8 @@ export default function SignInForm() {
             </button>
           </div>
         </div>
+
+        <p className="text-center opacity-50">No account yet? <Link href="/signup" className="text-[#EBCB6B] hover:underline">Sign Up</Link></p>
 
         <Button
           type="submit"

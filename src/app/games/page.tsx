@@ -1,21 +1,30 @@
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Swords } from "lucide-react";
-import GameCard from "@/components/GameCard";
-import { getRounds } from "@/server/rounds";
+import { getGames } from "@/server/games";
+import GamesTabs from "@/components/GamesTabs";
 
 export default async function Page() {
-    const allRounds = await getRounds();
-    const rounds = allRounds.length > 3 ? allRounds.slice(-3) : allRounds;
-    const activeRoundId = rounds.find(r => r.status === 'In progress')?.id || rounds[0]?.id;
+    const games = await getGames();
 
-    const getGridColsClass = (count: number) => {
-        switch (count) {
-            case 1: return 'grid-cols-1';
-            case 2: return 'grid-cols-2';
-            case 3: return 'grid-cols-3';
-            default: return 'grid-cols-3';
+    const roundsMap = new Map();
+    games.forEach((game) => {
+        const roundId = String(game.round);
+        if (!roundsMap.has(roundId)) {
+            roundsMap.set(roundId, {
+                id: roundId,
+                label: `Round ${roundId}`,
+                status: 'Finished',
+                games: []
+            });
         }
-    };
+        const round = roundsMap.get(roundId);
+        round.games.push(game);
+
+        if (!game.result) {
+            round.status = 'In progress';
+        }
+    });
+
+    const allRounds = Array.from(roundsMap.values()).sort((a: any, b: any) => Number(a.id) - Number(b.id));
 
     return (
         <div className="min-h-screen text-white p-10 font-sans">
@@ -29,44 +38,7 @@ export default async function Page() {
                     <p className="text-[#fbbf24] text-sm font-semibold tracking-widest uppercase">Plans & Results</p>
                 </div>
 
-                <Tabs defaultValue={activeRoundId} className="w-full">
-                    <TabsList className={`w-full bg-[#1A1A1A] p-1 h-auto rounded-lg grid ${getGridColsClass(rounds.length)} mb-8`}>
-                        {rounds.map((round) => (
-                            <TabsTrigger
-                                key={round.id}
-                                value={round.id}
-                                className="py-3 text-base rounded-md transition-all data-[state=active]:text-black"
-                                // @ts-ignore - activeClassName might be a custom prop in your setup, keeping it if valid
-                                activeClassName="bg-[#FCD34D]"
-                            >
-                                {round.label}
-                            </TabsTrigger>
-                        ))}
-                    </TabsList>
-
-                    {rounds.map((round) => (
-                        <TabsContent key={round.id} value={round.id} className="space-y-6">
-                            <div className="flex items-center gap-2 text-gray-400 mb-6">
-                                <Swords className="w-5 h-5 text-[#FCD34D]" />
-                                <span className="font-bold text-white">{round.label}</span>
-                                <span className="text-gray-600">•</span>
-                                <span>{round.status}</span>
-                            </div>
-
-                            <div className="space-y-4">
-                                {round.games.map((game, index) => (
-                                    <GameCard
-                                        key={index}
-                                        gameNumber={game.gameNumber}
-                                        whitePlayer={game.whitePlayer}
-                                        blackPlayer={game.blackPlayer}
-                                        status={game.status}
-                                    />
-                                ))}
-                            </div>
-                        </TabsContent>
-                    ))}
-                </Tabs>
+                <GamesTabs allRounds={allRounds} />
             </div>
         </div>
     );

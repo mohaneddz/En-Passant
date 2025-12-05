@@ -7,7 +7,7 @@ import StatsGrid from '@/components/dashboard/StatsGrid';
 import TabNavigation from '@/components/dashboard/TabNavigation';
 import AddPlayerForm from '@/components/dashboard/AddPlayerForm';
 import PlayersTable from '@/components/dashboard/PlayersTable';
-import GamesList, { GamesListRef } from '@/components/dashboard/GamesList';
+import GamesList from '@/components/dashboard/GamesList';
 
 import SimpleDialog from '@/components/SimpleDialog';
 
@@ -17,7 +17,6 @@ export default function ChessDashboard() {
     setActiveTab,
     players,
     rounds,
-    loading,
     showNextPhaseDialog,
     setShowNextPhaseDialog,
     showUndoDialog,
@@ -32,6 +31,7 @@ export default function ChessDashboard() {
     fetchPlayers,
     fetchStats,
     fetchRounds,
+    handleRestorePlayer
   } = useDashboard();
 
   return (
@@ -77,6 +77,7 @@ export default function ChessDashboard() {
               players={players}
               onDelete={handleDeletePlayer}
               onRefresh={fetchPlayers}
+              onRestore={handleRestorePlayer}
             />
           </div>
         )}

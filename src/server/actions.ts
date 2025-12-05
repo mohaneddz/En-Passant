@@ -111,7 +111,7 @@ export async function generateNextRound() {
         // specific Swiss logic requires complex backtracking.
         // For this MVP, if not paired, they might just sit out or we force pair.
         // For now, we'll log it or leave them unpaired (which is bad, but MVP).
-        if (!paired) {
+        if (!paired) {  
             console.warn(`Could not pair player ${p1.name} (${p1.id})`);
         }
       }

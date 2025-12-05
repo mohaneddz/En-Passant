@@ -1,5 +1,6 @@
 import React from 'react';
 import { Users, Grid3x3, Trophy, Calendar } from 'lucide-react';
+import type { StatsGridProps } from '@/server/stats';
 
 interface StatCardProps {
   icon: React.ElementType;
@@ -25,15 +26,6 @@ const StatCard: React.FC<StatCardProps> = ({ icon: Icon, label, value }) => (
   </div>
 );
 
-interface StatsGridProps {
-  stats: {
-    totalPlayers: number | null;
-    totalRounds: number | null;
-    gamesPlayed: number | null;
-    currentRound: number | null;
-  };
-}
-
 const StatsGrid: React.FC<StatsGridProps> = ({ stats }) => (
   <>
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
@@ -54,8 +46,8 @@ const StatsGrid: React.FC<StatsGridProps> = ({ stats }) => (
       />
       <StatCard 
         icon={Calendar} 
-        label="Current round" 
-        value={stats.currentRound ?? '-'}
+        label="Total Games" 
+        value={stats.totalGames ?? 0}
       />
     </div>
   </>
