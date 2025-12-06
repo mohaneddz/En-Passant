@@ -67,7 +67,7 @@ const PlayerRow: React.FC<PlayerRowProps> = ({ player, onDelete, onRestore, onAb
                         </button>
                     ) : (
                         <button
-                            onClick={() => onRestore(player.id)}
+                            onClick={() => onAbsent(player.id)}
                             className="p-2 bg-yellow-500/10 hover:bg-yellow-500/20 rounded-lg transition-colors border border-transparent hover:border-yellow-500/30 click"
                             title="Restore Player"
                         >

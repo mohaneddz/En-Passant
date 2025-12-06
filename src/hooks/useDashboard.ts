@@ -41,8 +41,10 @@ export const useDashboard = () => {
 		try {
 			const player = await getPlayerById(id);
 			if (player.is_present) {
+				console.log('Marking player absent:', id);
 				await markAbsent(id);
 			} else {
+				console.log('Marking player present:', id);
 				await markPresent(id);
 			}
 			await fetchPlayers();
