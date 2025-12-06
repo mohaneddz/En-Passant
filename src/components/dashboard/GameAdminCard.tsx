@@ -79,7 +79,7 @@ export default function GameAdminCard({
 
   if (presence < 2) {
     return (
-      <div className="bg-[#1a1a1a] border border-[#222] rounded-lg p-3 flex flex-col sm:flex-row items-center gap-4 opacity-75 cursor-not-allowed relative">
+      <div className="bg-[#1a1a1a] border border-[#222] rounded-lg p-3 flex flex-col sm:flex-row items-center gap-4 opacity-75 cursor-not-allowed relative py-4">
         {/* Delete Button */}
         {isEditable && onDelete && (
           <button
@@ -97,7 +97,7 @@ export default function GameAdminCard({
         </div>
 
         {/* Player with Bye */}
-        <div className="flex-1 flex items-center justify-start gap-3 w-full">
+        <div className="flex-1 flex items-center justify-start gap-3 w-full ml-8">
           <div className="text-sm font-medium text-[#FCD34D] truncate">
             {white}
           </div>
@@ -119,7 +119,7 @@ export default function GameAdminCard({
 
   return (
     <div className={cn(
-      "bg-[#1a1a1a] border rounded-lg p-3 flex flex-col sm:flex-row items-center gap-4 transition-all duration-200 relative",
+      "bg-[#1a1a1a] border rounded-lg p-3 flex flex-col sm:flex-row items-center gap-4 transition-all duration-200 relative py-4",
       isEditable
         ? "border-[#333] hover:border-[#555] hover:bg-[#1f1f1f]"
         : "border-[#222] opacity-75 cursor-not-allowed bg-[#151515]"

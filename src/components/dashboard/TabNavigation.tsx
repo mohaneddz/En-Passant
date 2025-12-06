@@ -45,7 +45,14 @@ const TabNavigation: React.FC<TabNavigationProps> = ({
           disabled={nextPhaseDisabled}
           className={`${activeClass} ${nextPhaseDisabled ? disabledClass + " bg-gray-800 text-gray-500" : ""}`}
         >
-          End Current Round
+          Start New Round
+        </Button>
+        <Button 
+          onClick={onNextPhase}
+          disabled={nextPhaseDisabled}
+          className={`${activeClass} ${nextPhaseDisabled ? disabledClass + " bg-gray-800 text-gray-500" : ""}`}
+        >
+          Generate Rounds
         </Button>
         <Button 
           onClick={onUndo} 
