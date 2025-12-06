@@ -45,6 +45,28 @@ export function getPlayerNameById(id: number) {
 	return promise;
 }
 
+/**
+ * Reverse the color streak when deleting a game
+ * This undoes the streak change that was applied when the game was created
+ */
+function reverseColorStreak(currentStreak: number, playedColor: 'white' | 'black'): number {
+	if (playedColor === 'white') {
+		// Player played white, so their streak increased toward positive
+		// Reverse: if streak is +2, go back to +1. If +1, go back to 0.
+		if (currentStreak === 2) return 1;
+		if (currentStreak === 1) return 0;
+		// Edge case: streak shouldn't be 0 or negative if they played white, but handle gracefully
+		return Math.max(0, currentStreak - 1);
+	} else {
+		// Player played black, so their streak decreased toward negative
+		// Reverse: if streak is -2, go back to -1. If -1, go back to 0.
+		if (currentStreak === -2) return -1;
+		if (currentStreak === -1) return 0;
+		// Edge case: streak shouldn't be 0 or positive if they played black, but handle gracefully
+		return Math.min(0, currentStreak + 1);
+	}
+}
+
 export async function deleteGameById(id: number) {
 	// Fetch the game to be deleted
 	const { data: game, error: gameError } = await supabase
@@ -58,80 +80,119 @@ export async function deleteGameById(id: number) {
 		throw new Error('Failed to fetch game');
 	}
 
-	// Fetch white and black players
+	const isByeGame = game.black === 0 || game.presence === 1;
+
+	// Fetch white player
 	const { data: whitePlayer, error: whiteError } = await supabase
 		.from('players')
 		.select('*')
 		.eq('id', game.white)
 		.single();
 
-	const { data: blackPlayer, error: blackError } = await supabase
-		.from('players')
-		.select('*')
-		.eq('id', game.black)
-		.single();
-
-	if (whiteError || blackError || !whitePlayer || !blackPlayer) {
-		console.error('Error fetching players:', whiteError, blackError);
-		throw new Error('Failed to fetch players');
+	if (whiteError || !whitePlayer) {
+		console.error('Error fetching white player:', whiteError);
+		throw new Error('Failed to fetch white player');
 	}
 
-	// Remove opponents from each other's lists
-	const updatedWhiteOpponents = (whitePlayer.opponents || []).filter(
-		(opId: number) => Number(opId) !== game.black
-	);
-	const updatedBlackOpponents = (blackPlayer.opponents || []).filter(
-		(opId: number) => Number(opId) !== game.white
-	);
+	// Fetch black player only if not a bye game
+	let blackPlayer = null;
+	if (!isByeGame) {
+		const { data: fetchedBlackPlayer, error: blackError } = await supabase
+			.from('players')
+			.select('*')
+			.eq('id', game.black)
+			.single();
 
-	// Determine stat changes based on game status
-	let whiteUpdates: any = {
-		opponents: updatedWhiteOpponents,
-		color: 0,
-		games: Math.max(0, whitePlayer.games - 1)
-	};
-	let blackUpdates: any = {
-		opponents: updatedBlackOpponents,
-		color: 0,
-		games: Math.max(0, blackPlayer.games - 1)
-	};
+		if (blackError || !fetchedBlackPlayer) {
+			console.error('Error fetching black player:', blackError);
+			throw new Error('Failed to fetch black player');
+		}
+		blackPlayer = fetchedBlackPlayer;
+	}
 
 	const status = game.status;
-	
-	if (status === 'WHITE_WINS') {
-		whiteUpdates.wins = Math.max(0, whitePlayer.wins - 1);
-		blackUpdates.losses = Math.max(0, blackPlayer.losses - 1);
-	} else if (status === 'BLACK_WINS') {
-		blackUpdates.wins = Math.max(0, blackPlayer.wins - 1);
-		whiteUpdates.losses = Math.max(0, whitePlayer.losses - 1);
-	} else if (status === 'DRAW') {
-		whiteUpdates.draws = Math.max(0, whitePlayer.draws - 1);
-		blackUpdates.draws = Math.max(0, blackPlayer.draws - 1);
-	} else if (status === 'BYE') {
-		if (game.presence < 2) {
-			if (status === 'WHITE_WINS'){
-				whiteUpdates.byes = Math.max(0, whitePlayer.byes - 1);
-			}else{
-				blackUpdates.byes = Math.max(0, blackPlayer.byes - 1);
+
+	// Handle BYE games separately
+	if (isByeGame) {
+		// Only update stats if game had a result (not PENDING)
+		// PENDING games don't modify player stats at all
+		if (status !== 'PENDING') {
+			const reversedStreak = reverseColorStreak(whitePlayer.color || 0, 'white');
+			
+			const whiteUpdates: any = {
+				color: reversedStreak,
+				games: Math.max(0, whitePlayer.games - 1),
+				byes: Math.max(0, whitePlayer.byes - 1)
+			};
+
+			const { error: whiteUpdateError } = await supabase
+				.from('players')
+				.update(whiteUpdates)
+				.eq('id', game.white);
+
+			if (whiteUpdateError) {
+				console.error('Error updating player:', whiteUpdateError);
+				throw new Error('Failed to update player');
 			}
 		}
-	}
+	} else {
+		// Regular game with two players
+		// Only update stats if game had a result (not PENDING)
+		// PENDING games don't modify player stats at all
+		if (status !== 'PENDING') {
+			// Remove opponents from each other's lists
+			const updatedWhiteOpponents = (whitePlayer.opponents || []).filter(
+				(opId: number) => Number(opId) !== game.black
+			);
+			const updatedBlackOpponents = (blackPlayer!.opponents || []).filter(
+				(opId: number) => Number(opId) !== game.white
+			);
 
-	// Update white player
-	const { error: whiteUpdateError } = await supabase
-		.from('players')
-		.update(whiteUpdates)
-		.eq('id', game.white);
+			// Reverse color streaks
+			const whiteReversedStreak = reverseColorStreak(whitePlayer.color || 0, 'white');
+			const blackReversedStreak = reverseColorStreak(blackPlayer!.color || 0, 'black');
 
-	// Update black player
-	const { error: blackUpdateError } = await supabase
-		.from('players')
-		.update(blackUpdates)
-		.eq('id', game.black);
+			// Determine stat changes based on game status
+			let whiteUpdates: any = {
+				opponents: updatedWhiteOpponents,
+				color: whiteReversedStreak,
+				games: Math.max(0, whitePlayer.games - 1)
+			};
+			let blackUpdates: any = {
+				opponents: updatedBlackOpponents,
+				color: blackReversedStreak,
+				games: Math.max(0, blackPlayer!.games - 1)
+			};
 
-	if (whiteUpdateError || blackUpdateError) {
-		console.error('Error updating players:', whiteUpdateError, blackUpdateError);
-		throw new Error('Failed to update players');
+			// Reverse win/loss/draw stats
+			if (status === 'WHITE_WINS') {
+				whiteUpdates.wins = Math.max(0, whitePlayer.wins - 1);
+				blackUpdates.losses = Math.max(0, blackPlayer!.losses - 1);
+			} else if (status === 'BLACK_WINS') {
+				blackUpdates.wins = Math.max(0, blackPlayer!.wins - 1);
+				whiteUpdates.losses = Math.max(0, whitePlayer.losses - 1);
+			} else if (status === 'DRAW') {
+				whiteUpdates.draws = Math.max(0, whitePlayer.draws - 1);
+				blackUpdates.draws = Math.max(0, blackPlayer!.draws - 1);
+			}
+
+			// Update white player
+			const { error: whiteUpdateError } = await supabase
+				.from('players')
+				.update(whiteUpdates)
+				.eq('id', game.white);
+
+			// Update black player
+			const { error: blackUpdateError } = await supabase
+				.from('players')
+				.update(blackUpdates)
+				.eq('id', game.black);
+
+			if (whiteUpdateError || blackUpdateError) {
+				console.error('Error updating players:', whiteUpdateError, blackUpdateError);
+				throw new Error('Failed to update players');
+			}
+		}
 	}
 
 	// Delete the game
@@ -208,95 +269,278 @@ export function assignMatchColors(p1: Player, p2: Player): { white: Player; blac
 	}
 
 	// If streaks are equal (e.g. 0 vs 0, or +1 vs +1)
-	// Randomly assign or use ID/Rating as deterministic tie breaker.
-	// Using random for fairness if no other metric.
-	return Math.random() < 0.5 ? { white: p1, black: p2 } : { white: p2, black: p1 };
+	// Use deterministic tie breaker: higher-rated player gets white
+	// (following FIDE convention for initial color in Swiss)
+	if ((p1.rating || 0) > (p2.rating || 0)) {
+		return { white: p1, black: p2 };
+	} else if ((p2.rating || 0) > (p1.rating || 0)) {
+		return { white: p2, black: p1 };
+	}
+	
+	// If ratings are also equal, use ID (lower ID gets white for determinism)
+	return p1.id < p2.id ? { white: p1, black: p2 } : { white: p2, black: p1 };
 }
 
+// --- Advanced Swiss Pairing System ---
+
+interface ScoreBracket {
+	score: number;
+	players: Player[];
+}
+
+interface PairingCandidate {
+	p1: Player;
+	p2: Player;
+	penalty: number;
+}
+
+/**
+ * Calculate pairing penalty score (lower is better)
+ * Professional Swiss uses weighted penalties for:
+ * - Rating difference
+ * - Color conflicts
+ * - Previous opponents
+ */
+function calculatePairingPenalty(p1: Player, p2: Player): number {
+	let penalty = 0;
+
+	// 1. Rating difference penalty (normalized)
+	const ratingDiff = Math.abs((p1.rating || 1500) - (p2.rating || 1500));
+	penalty += ratingDiff / 100; // Scale: 100 points = 1 penalty point
+
+	// 2. Color conflict penalty
+	if (!isColorCompatible(p1.color, p2.color)) {
+		penalty += 1000; // Very high penalty for color conflicts
+	}
+
+	// 3. Strong color preference satisfaction penalty
+	const p1Pref = getColorPreference(p1.color);
+	const p2Pref = getColorPreference(p2.color);
+	
+	// Reward strong preferences being met
+	if (p1Pref === 'MUST_WHITE' || p1Pref === 'MUST_BLACK') penalty -= 5;
+	if (p2Pref === 'MUST_WHITE' || p2Pref === 'MUST_BLACK') penalty -= 5;
+	
+	// Mild penalty if both neutral (less interesting)
+	if (p1Pref === 'NEUTRAL' && p2Pref === 'NEUTRAL') penalty += 1;
+
+	// 4. Prevent rematches (absolute)
+	if (p1.opponents?.includes(p2.id) || p2.opponents?.includes(p1.id)) {
+		penalty += 10000; // Absolutely avoid rematches
+	}
+
+	return penalty;
+}
+
+/**
+ * Group players into score brackets
+ */
+function createScoreBrackets(players: Player[]): ScoreBracket[] {
+	const bracketMap = new Map<number, Player[]>();
+	
+	for (const player of players) {
+		const score = player.score || 0;
+		if (!bracketMap.has(score)) {
+			bracketMap.set(score, []);
+		}
+		bracketMap.get(score)!.push(player);
+	}
+
+	// Sort brackets by score (descending) and players within by rating (descending)
+	const brackets: ScoreBracket[] = [];
+	const sortedScores = Array.from(bracketMap.keys()).sort((a, b) => b - a);
+	
+	for (const score of sortedScores) {
+		const players = bracketMap.get(score)!;
+		players.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+		brackets.push({ score, players });
+	}
+
+	return brackets;
+}
+
+/**
+ * Try to pair players within a bracket using backtracking
+ */
+function pairBracket(players: Player[], usedGlobal: Set<number>): { p1: Player; p2: Player }[] | null {
+	if (players.length === 0) return [];
+	if (players.length === 1) return null; // Odd player - needs downfloat
+	
+	// Filter out already used players
+	const available = players.filter(p => !usedGlobal.has(p.id));
+	if (available.length === 0) return [];
+	if (available.length === 1) return null;
+
+	// Try backtracking pairing
+	const result = backtrackPair(available, 0, [], usedGlobal);
+	return result;
+}
+
+/**
+ * Backtracking algorithm to find valid pairings
+ */
+function backtrackPair(
+	players: Player[],
+	index: number,
+	currentPairs: { p1: Player; p2: Player }[],
+	used: Set<number>
+): { p1: Player; p2: Player }[] | null {
+	// Base case: all players paired
+	if (index >= players.length) {
+		return currentPairs;
+	}
+
+	// Skip if already paired
+	if (used.has(players[index].id)) {
+		return backtrackPair(players, index + 1, currentPairs, used);
+	}
+
+	const p1 = players[index];
+	
+	// Try pairing with all subsequent unpaired players
+	const candidates: PairingCandidate[] = [];
+	
+	for (let i = index + 1; i < players.length; i++) {
+		if (used.has(players[i].id)) continue;
+		
+		const p2 = players[i];
+		const penalty = calculatePairingPenalty(p1, p2);
+		
+		// Only consider valid pairings (no rematches, compatible colors)
+		if (penalty < 10000) {
+			candidates.push({ p1, p2, penalty });
+		}
+	}
+
+	// Sort candidates by penalty (best first)
+	candidates.sort((a, b) => a.penalty - b.penalty);
+
+	// Try each candidate
+	for (const candidate of candidates) {
+		used.add(candidate.p1.id);
+		used.add(candidate.p2.id);
+		currentPairs.push({ p1: candidate.p1, p2: candidate.p2 });
+
+		const result = backtrackPair(players, index + 1, currentPairs, used);
+		
+		if (result !== null) {
+			return result; // Success
+		}
+
+		// Backtrack
+		used.delete(candidate.p1.id);
+		used.delete(candidate.p2.id);
+		currentPairs.pop();
+	}
+
+	return null; // No valid pairing found
+}
+
+/**
+ * Professional Swiss System Pairing Algorithm
+ * Implements:
+ * - Score bracket pairing
+ * - Downfloating for odd brackets
+ * - Backtracking for optimal pairings
+ * - Color preference optimization
+ * - Proper bye handling
+ */
 export function generatePairings(players: Player[]): { pairs: { p1: Player; p2: Player }[]; bye: Player | null } {
-	// Sort by Score (desc), then Rating (desc)
-	let workingPlayers = [...players].sort((a, b) => {
+	// Sort all players by score (desc) then rating (desc)
+	const sortedPlayers = [...players].sort((a, b) => {
 		if ((a.score || 0) !== (b.score || 0)) return (b.score || 0) - (a.score || 0);
-		return Number(b.rating || 0) - Number(a.rating || 0);
+		return (b.rating || 0) - (a.rating || 0);
 	});
 
+	// Handle bye if odd number of players
 	let bye: Player | null = null;
-	if (workingPlayers.length % 2 !== 0) {
-		// Prioritize absent players for bye first
-		for (let i = workingPlayers.length - 1; i >= 0; i--) {
-			if (!workingPlayers[i].is_present) {
-				bye = workingPlayers[i];
-				workingPlayers.splice(i, 1);
-				break;
+	let workingPlayers = sortedPlayers;
+	
+	if (sortedPlayers.length % 2 !== 0) {
+		// Find the lowest-rated player who hasn't had a bye yet (or fewest byes)
+		const byeCandidates = [...sortedPlayers].sort((a, b) => {
+			// First priority: fewest byes
+			if (a.byes !== b.byes) return a.byes - b.byes;
+			// Second priority: lowest rating
+			return (a.rating || 0) - (b.rating || 0);
+		});
+		
+		bye = byeCandidates[0];
+		workingPlayers = sortedPlayers.filter(p => p.id !== bye!.id);
+	}
+
+	// Create score brackets
+	const brackets = createScoreBrackets(workingPlayers);
+	
+	const allPairs: { p1: Player; p2: Player }[] = [];
+	const usedPlayers = new Set<number>();
+	const floaters: Player[] = []; // Players who couldn't be paired in their bracket
+
+	// Pair each bracket
+	for (let i = 0; i < brackets.length; i++) {
+		const bracket = brackets[i];
+		let bracketPlayers = [...bracket.players, ...floaters];
+		floaters.length = 0; // Clear floaters
+
+		// Try to pair the bracket
+		const pairs = pairBracket(bracketPlayers, usedPlayers);
+		
+		if (pairs !== null) {
+			// Success - add pairs and mark players as used
+			for (const pair of pairs) {
+				allPairs.push(pair);
+				usedPlayers.add(pair.p1.id);
+				usedPlayers.add(pair.p2.id);
 			}
-		}
-		// If no absent players, give bye to lowest ranked player who hasn't had a bye yet
-		if (!bye) {
-			for (let i = workingPlayers.length - 1; i >= 0; i--) {
-				if (workingPlayers[i].byes === 0) {
-					bye = workingPlayers[i];
-					workingPlayers.splice(i, 1);
-					break;
+			
+			// Check for unpaired players (downfloat to next bracket)
+			const unpaired = bracketPlayers.filter(p => !usedPlayers.has(p.id));
+			if (unpaired.length > 0) {
+				// Sort unpaired by rating (lowest floats down)
+				unpaired.sort((a, b) => (a.rating || 0) - (b.rating || 0));
+				floaters.push(...unpaired);
+			}
+		} else {
+			// Bracket has odd number - downfloat lowest rated
+			bracketPlayers.sort((a, b) => (a.rating || 0) - (b.rating || 0));
+			if (bracketPlayers.length > 0) {
+				floaters.push(bracketPlayers[0]);
+				bracketPlayers = bracketPlayers.slice(1);
+				
+				// Retry pairing
+				const retryPairs = pairBracket(bracketPlayers, usedPlayers);
+				if (retryPairs) {
+					for (const pair of retryPairs) {
+						allPairs.push(pair);
+						usedPlayers.add(pair.p1.id);
+						usedPlayers.add(pair.p2.id);
+					}
 				}
 			}
 		}
-		// If everyone has had a bye, take the one with fewest byes
-		if (!bye) {
-			workingPlayers.sort((a, b) => a.byes - b.byes);
-			bye = workingPlayers.pop()!;
-		}
 	}
 
-	const pairs: { p1: Player; p2: Player }[] = [];
-	const used = new Set<number>();
-
-	for (let i = 0; i < workingPlayers.length; i++) {
-		if (used.has(workingPlayers[i].id)) continue;
-
-		const p1 = workingPlayers[i];
-		let paired = false;
-
-		for (let j = i + 1; j < workingPlayers.length; j++) {
-			if (used.has(workingPlayers[j].id)) continue;
-			const p2 = workingPlayers[j];
-
-			// 1. Avoid Rematches
-			// Note: opponents is number[], p2.id is number.
-			if (p1.opponents && p1.opponents.some((opId) => Number(opId) === p2.id)) continue;
-
-			// 2. Color Compatibility (use olor field)
-			if (!isColorCompatible(p1.color, p2.color)) continue;
-
-			// Match found
-			pairs.push({ p1, p2 });
-			used.add(p1.id);
-			used.add(p2.id);
-			paired = true;
-			break;
-		}
-
-		if (!paired) {
-			console.error(`CRITICAL: Could not pair player ${p1.id} (${p1.name}) in greedy pass.`);
-			// In a real implementation, we would backtrack here.
-			// For now, log the error and continue
-		}
+	// Handle remaining floaters (shouldn't happen but defensive)
+	if (floaters.length > 0) {
+		console.warn(`WARNING: ${floaters.length} player(s) could not be paired:`, 
+			floaters.map(p => `${p.name} (${p.id})`));
 	}
 
-	return { pairs, bye };
+	return { pairs: allPairs, bye };
 }
 
 // --- Round Management Functions ---
 
 export async function generateScheduledRound() {
 	try {
-		// 1. Fetch Players and filter for active and present
+		// 1. Fetch Players and filter for active, present, and not paused
 		const allPlayers = await supabase.from('players').select('*');
 		
 		if (allPlayers.error) {
 			throw allPlayers.error;
 		}
 
-		const players = allPlayers.data.filter((p: Player) => p.is_active && p.is_present);
+		const players = allPlayers.data.filter((p: Player) => p.is_active && p.is_present );
 		
 		if (!players || players.length < 2) {
 			return { success: false, error: 'Not enough active and present players (minimum 2 required)' };
@@ -439,33 +683,43 @@ export async function removeLastRound() {
 			return { success: false, error: 'Failed to fetch round games' };
 		}
 		
-		// 3. Check if any game has results entered
-		const hasResults = games.some(g => 
-			g.status !== 'PENDING' && g.status !== 'scheduled'
-		);
+		// 3. Categorize games by status
+		const pendingGames = games.filter(g => g.status === 'PENDING');
+		const completedGames = games.filter(g => g.status !== 'PENDING');
 		
-		if (hasResults) {
-			// 4a. Round has results - FULL ROLLBACK required
-			// Use deleteGameById for each game which handles all stat reversions
-			for (const game of games) {
-				await deleteGameById(game.id);
-			}
-		} else {
-			// 4b. Round is PENDING - Simple delete, no stat updates needed
-			// (opponents and streaks are only updated when results are entered)
-			
-			const { error: deleteError } = await supabase
-				.from('games')
-				.delete()
-				.eq('round', lastRound);
-			
-			if (deleteError) {
-				console.error('Error deleting games:', deleteError);
-				return { success: false, error: 'Failed to delete games' };
+		// 4. Delete completed games with full stat rollback
+		if (completedGames.length > 0) {
+			for (const game of completedGames) {
+				try {
+					await deleteGameById(game.id);
+				} catch (error) {
+					console.error(`Failed to delete game ${game.id}:`, error);
+					// Continue deleting other games even if one fails
+				}
 			}
 		}
 		
-		return { success: true, round: lastRound };
+		// 5. Delete pending games (no stat updates needed)
+		// Note: PENDING games don't modify player stats, so simple deletion is safe
+		if (pendingGames.length > 0) {
+			const { error: deleteError } = await supabase
+				.from('games')
+				.delete()
+				.in('id', pendingGames.map(g => g.id));
+			
+			if (deleteError) {
+				console.error('Error deleting pending games:', deleteError);
+				return { success: false, error: 'Failed to delete pending games' };
+			}
+		}
+		
+		return { 
+			success: true, 
+			round: lastRound,
+			deletedGames: games.length,
+			completedGames: completedGames.length,
+			pendingGames: pendingGames.length
+		};
 		
 	} catch (error) {
 		console.error('Error removing last round:', error);

@@ -15,10 +15,8 @@ const TabNavigation: React.FC<TabNavigationProps> = ({
   activeTab, 
   setActiveTab, 
   onGenerateRound,
-  onStartRound,
   onRemoveLastRound,
   generateDisabled = false,
-  startDisabled = false
 }) => {
   const containerClass = "flex gap-1 bg-[#1a1a1a] p-1 rounded-xl w-fit border border-[#333]";
   const activeClass = "bg-[#fbbf24] text-black shadow-lg shadow-yellow-500/20 hover:bg-yellow-400";
