@@ -20,7 +20,7 @@ export default function ChessTournamentLanding() {
                 alt="Chess Knight"
                 width={200}
                 height={200}
-                className="object-contain"
+                classNamae="object-contain"
               />
             </div>
           </div>

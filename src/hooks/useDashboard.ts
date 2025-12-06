@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { getPlayers, addPlayer, deletePlayer, editPlayer, restorePlayer } from '@/server/players';
+import { getPlayers, addPlayer, deletePlayer, editPlayer, restorePlayer,resetAllPlayers } from '@/server/players';
 import { getStats, StatsGridProps } from '@/server/stats';
-import { generateNextRound, undoLastRound } from '@/server/actions';
+import { generateNextRound } from '@/server/actions';
 import { GamesListRef } from '@/components/dashboard/GamesList';
 
 import { Player } from '@/types/player';
@@ -9,7 +9,6 @@ import { Player } from '@/types/player';
 export const useDashboard = () => {
 	const [activeTab, setActiveTab] = useState('players');
 	const [players, setPlayers] = useState<Player[]>([]);
-	const [rounds, setRounds] = useState<any[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [showNextPhaseDialog, setShowNextPhaseDialog] = useState(false);
 	const [showUndoDialog, setShowUndoDialog] = useState(false);
@@ -23,6 +22,15 @@ export const useDashboard = () => {
 			console.error('Error restoring player:', error);
 		}
 	};
+
+	const handleResetAllPlayers = async () => {
+		try {
+			await resetAllPlayers();
+			await fetchPlayers();
+		} catch (error) {
+			console.error('Error resetting players:', error);
+		}
+	}
 
 	const [stats, setStats] = useState<StatsGridProps['stats']>({
 		totalPlayers: null,
@@ -61,12 +69,11 @@ export const useDashboard = () => {
 		fetchRounds();
 	}, []);
 
-	const lastRound = rounds.length > 0 ? rounds[rounds.length - 1] : null;
 	const isNextPhaseDisabled = false;
 
-	const handleAddPlayer = async (newPlayer: { name: string }) => {
+	const handleAddPlayer = async (newPlayer: { name: string, rating: number }) => {
 		try {
-			await addPlayer(newPlayer.name);
+			await addPlayer(newPlayer.name, newPlayer.rating);
 			await fetchPlayers();
 		} catch (error) {
 			console.error('Error adding player:', error);
@@ -101,30 +108,29 @@ export const useDashboard = () => {
 		}
 	};
 
-	const handleUndoPhase = async () => {
-		try {
-			setLoading(true);
-			const result = await undoLastRound();
-			if (result.success) {
-				await fetchStats();
-				await fetchRounds();
-				await fetchPlayers();
-				setShowUndoDialog(false);
-			} else {
-				console.error('Error undoing phase:', result.error);
-			}
-		} catch (error) {
-			console.error('Error undoing phase:', error);
-		} finally {
-			setLoading(false);
-		}
-	};
+	// const handleUndoPhase = async () => {
+	// 	try {
+	// 		setLoading(true);
+	// 		const result = await undoLastRound();
+	// 		if (result.success) {
+	// 			await fetchStats();
+	// 			await fetchRounds();
+	// 			await fetchPlayers();
+	// 			setShowUndoDialog(false);
+	// 		} else {
+	// 			console.error('Error undoing phase:', result.error);
+	// 		}
+	// 	} catch (error) {
+	// 		console.error('Error undoing phase:', error);
+	// 	} finally {
+	// 		setLoading(false);
+	// 	}
+	// };
 
 	return {
 		activeTab,
 		setActiveTab,
 		players,
-		rounds,
 		loading,
 		showNextPhaseDialog,
 		setShowNextPhaseDialog,
@@ -132,15 +138,15 @@ export const useDashboard = () => {
 		setShowUndoDialog,
 		gamesListRef,
 		stats,
-		lastRound,
 		isNextPhaseDisabled,
 		handleAddPlayer,
 		handleDeletePlayer,
 		handleNextPhase,
-		handleUndoPhase,
+		// handleUndoPhase,
 		fetchPlayers,
 		fetchStats,
 		fetchRounds,
-		handleRestorePlayer
+		handleRestorePlayer,
+		handleResetAllPlayers
 	};
 };

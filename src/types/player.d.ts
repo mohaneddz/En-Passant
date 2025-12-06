@@ -8,6 +8,7 @@ export interface Player {
   games: number;    // smallint
   opponents: bigint[]; // Array of opponent IDs
   color: number;    // smallint (e.g., color balance)
+  color_streak: number; // Signed streak counter (+1, +2, -1, -2)
   byes: number;     // smallint
   is_active: boolean; // Active status
 

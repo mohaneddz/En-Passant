@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from 'react';
+
 import { useDashboard } from '@/hooks/useDashboard';
 
 import Header from '@/components/dashboard/Header';
@@ -9,6 +11,8 @@ import AddPlayerForm from '@/components/dashboard/AddPlayerForm';
 import PlayersTable from '@/components/dashboard/PlayersTable';
 import GamesList from '@/components/dashboard/GamesList';
 
+import {getGames} from '@/server/games';
+
 import SimpleDialog from '@/components/SimpleDialog';
 
 export default function ChessDashboard() {
@@ -16,10 +20,8 @@ export default function ChessDashboard() {
     activeTab,
     setActiveTab,
     players,
-    rounds,
     showNextPhaseDialog,
     setShowNextPhaseDialog,
-    showUndoDialog,
     setShowUndoDialog,
     gamesListRef,
     stats,
@@ -27,12 +29,25 @@ export default function ChessDashboard() {
     handleAddPlayer,
     handleDeletePlayer,
     handleNextPhase,
-    handleUndoPhase,
+    // handleUndoPhase,
     fetchPlayers,
     fetchStats,
     fetchRounds,
-    handleRestorePlayer
+    handleRestorePlayer,
+    handleResetAllPlayers
   } = useDashboard();
+
+  const [games, setGames] = useState<any[]>([]);
+
+  useEffect(() => {
+    let mounted = true;
+    getGames().then((g) => {
+      if (mounted) setGames(g);
+    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#111]">
@@ -60,7 +75,7 @@ export default function ChessDashboard() {
           confirmColor="bg-[#fbbf24] hover:bg-[#fbbf24]/90"
         />
 
-        <SimpleDialog
+        {/* <SimpleDialog
           isOpen={showUndoDialog}
           onClose={() => setShowUndoDialog(false)}
           onConfirm={handleUndoPhase}
@@ -68,7 +83,7 @@ export default function ChessDashboard() {
           description="This will revert the tournament to the previous state. Are you sure?"
           confirmText="Undo"
           confirmColor="bg-red-600 hover:bg-red-700"
-        />
+        /> */}
 
         {activeTab === 'players' && (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -78,6 +93,7 @@ export default function ChessDashboard() {
               onDelete={handleDeletePlayer}
               onRefresh={fetchPlayers}
               onRestore={handleRestorePlayer}
+              onReset={handleResetAllPlayers}
             />
           </div>
         )}
@@ -86,7 +102,7 @@ export default function ChessDashboard() {
           <div className="space-y-4">
             <GamesList
               ref={gamesListRef}
-              rounds={rounds}
+              games={games}
               onGameUpdate={() => {
                 fetchStats();
                 fetchRounds();

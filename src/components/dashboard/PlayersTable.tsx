@@ -2,29 +2,40 @@
 
 import { Player } from '@/types/player';
 import PlayerRow from './PlayerRow';
+import { RotateCcw, Trash2 } from 'lucide-react';
 
 interface PlayersTableProps {
   players: Player[];
   onDelete: (id: number) => void;
   onRestore: (id: number) => void;
   onRefresh: () => void;
+  onReset: () => void;
 }
 
-export default function PlayersTable({ players, onDelete, onRestore, onRefresh }: PlayersTableProps) {
+export default function PlayersTable({ players, onDelete, onRestore, onRefresh, onReset }: PlayersTableProps) {
   return (
     <div className="bg-[#1a1a1a] border border-[#333] rounded-xl overflow-hidden">
       <div className="p-8 border-b border-[#333]">
         <div className="flex justify-between items-center">
           <h2 className="text-white text-xl font-bold">All Players</h2>
-          <button
-            onClick={onRefresh}
-            className="p-3 bg-[#222] hover:bg-[#333] text-gray-400 hover:text-white rounded-lg transition-colors border border-[#333] click"
-            title="Refresh Players"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
-            </svg>
-          </button>
+
+          <div className="flex gap-4">
+            <button
+              onClick={onRefresh}
+              className="p-3 bg-[#222] hover:bg-[#333] text-gray-400 hover:text-white rounded-lg transition-colors border border-[#333] click"
+              title="Refresh Players"
+            >
+              <RotateCcw className="w-5 h-5" />
+            </button>
+            <button
+              onClick={onReset}
+              className="p-3 bg-[#222] hover:bg-[#333] text-gray-400 hover:text-white rounded-lg transition-colors border border-[#333] click"
+              title="Reset Everything"
+            >
+              <Trash2 className="w-5 h-5" />
+            </button>
+          </div>
+
         </div>
       </div>
       <div className="overflow-x-auto">

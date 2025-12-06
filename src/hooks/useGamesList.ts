@@ -1,23 +1,43 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import {getCurrentRound} from '@/server/games';
 // import { updateGame } from '@/server/games';
 
-export const useGamesList = (rounds: any[], onGameUpdate?: () => void) => {
+export const useGamesList = (games: any[], onGameUpdate?: () => void, onValidateRound?: (roundId: string, results: any[]) => void) => {
+  // Process games into rounds (copied from page.tsx)
+  const rounds = useMemo(() => {
+    const roundsMap = new Map();
+    games.forEach((game) => {
+      const roundId = String(game.round);
+      if (!roundsMap.has(roundId)) {
+        roundsMap.set(roundId, {
+          id: roundId,
+          label: `Round ${roundId}`,
+          status: 'Finished',
+          games: []
+        });
+      }
+      const round = roundsMap.get(roundId);
+      round.games.push(game);
+
+      if (!game.result) {
+        round.status = 'In progress';
+      }
+    });
+
+    return Array.from(roundsMap.values()).sort((a: any, b: any) => Number(a.id) - Number(b.id));
+  }, [games]);
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedResults, setSelectedResults] = useState<Record<number, string>>({});
 
-  // Initialize to the active round or the last round
   useEffect(() => {
-    if (rounds && rounds.length > 0) {
-      const activeIndex = rounds.findIndex(r => r.status === 'In progress' || r.status === 'active');
-      if (activeIndex !== -1) {
-        setCurrentIndex(activeIndex);
-      } else {
-        setCurrentIndex(rounds.length - 1);
-      }
-    }
-  }, [rounds]);
+    const initIndex = async () => {
+      const round = await getCurrentRound();
+      setCurrentIndex(Math.max(0, round - 1));
+    };
+    initIndex();
+  }, []);
 
-  // Reset selections when round changes and pre-fill existing results
   useEffect(() => {
     const initialResults: Record<number, string> = {};
     if (rounds[currentIndex]?.games) {
@@ -65,11 +85,23 @@ export const useGamesList = (rounds: any[], onGameUpdate?: () => void) => {
     }
   };
 
+  const triggerValidation = () => {
+    if (onValidateRound && rounds[currentIndex]) {
+      const results = Object.entries(selectedResults).map(([index, result]) => ({
+        gameIndex: parseInt(index),
+        result
+      }));
+      onValidateRound(rounds[currentIndex].id, results);
+    }
+  };
+
   return {
+    rounds,
     currentIndex,
     selectedResults,
     nextRound,
     prevRound,
     handleResultSelect,
+    triggerValidation,
   };
 };

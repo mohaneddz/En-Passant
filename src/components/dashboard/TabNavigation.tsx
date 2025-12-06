@@ -45,13 +45,13 @@ const TabNavigation: React.FC<TabNavigationProps> = ({
           disabled={nextPhaseDisabled}
           className={`${activeClass} ${nextPhaseDisabled ? disabledClass + " bg-gray-800 text-gray-500" : ""}`}
         >
-          Start The Next Phase
+          Start Next Round
         </Button>
         <Button 
           onClick={onUndo} 
           className="bg-gray-700/70 text-white shadow-lg shadow-gray-500/20 hover:bg-gray-600/70"
         >
-          Undo To Last Phase
+          Remove Last Round
         </Button>
       </div>
     </div>

@@ -13,8 +13,8 @@ export async function getPlayers() {
 	return data;
 }
 
-export async function addPlayer(name: string) {
-	const { data, error } = await supabase.from('players').insert([{ name }]);
+export async function addPlayer(name: string, rating: number = 1200) {
+	const { data, error } = await supabase.from('players').insert([{ name, rating }]);
 	if (error) {
 		throw error;
 	}
@@ -93,4 +93,44 @@ export async function calculateBuchholzScores(id: number) {
     }, 0);
 
 	return result;
+}
+
+export async function updatePlayerStreaks(updates: { playerId: number, newStreak: number }[]) {
+    // Perform updates in parallel
+    const promises = updates.map(({ playerId, newStreak }) => 
+        supabase
+            .from('players')
+            .update({ color_streak: newStreak })
+            .eq('id', playerId)
+    );
+
+    const results = await Promise.all(promises);
+    
+    // Check for errors
+    const errors = results.filter(r => r.error).map(r => r.error);
+    if (errors.length > 0) {
+        console.error('Errors updating player streaks:', errors);
+        throw new Error('Failed to update some player streaks');
+    }
+}
+
+export async function resetAllPlayers() {
+
+	// # apply to all
+	const { data, error } = await supabase.from('players').update({
+		wins: 0,
+		losses: 0,
+		draws: 0,
+		byes: 0,
+		games: 0,
+		opponents: [],
+		color: 0,
+		is_active: true,
+	})
+	.neq('id', 0); 
+	
+	if (error) {
+		throw error;
+	}
+	return data;
 }

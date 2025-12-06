@@ -1,11 +1,12 @@
-import { forwardRef, useImperativeHandle } from 'react';
+import { forwardRef, useImperativeHandle, useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Swords } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import GameAdminCard from '@/components/dashboard/GameAdminCard';
 import { useGamesList } from '@/hooks/useGamesList';
 
+import GameAdminCard from '@/components/dashboard/GameAdminCard';
+
 interface GamesListProps {
-  rounds: any[];
+  games: any[];
   onValidateRound?: (roundId: string, results: any[]) => void;
   onGameUpdate?: () => void;
 }
@@ -14,22 +15,15 @@ export interface GamesListRef {
   triggerValidation: () => void;
 }
 
-const GamesList = forwardRef<GamesListRef, GamesListProps>(({ rounds, onValidateRound, onGameUpdate }, ref) => {
-  const { currentIndex, selectedResults, nextRound, prevRound, handleResultSelect } = useGamesList(rounds, onGameUpdate);
+const GamesList = forwardRef<GamesListRef, GamesListProps>(({ games, onValidateRound, onGameUpdate }, ref) => {
+  const { rounds, currentIndex, selectedResults, nextRound, prevRound, handleResultSelect, triggerValidation } = useGamesList(games, onGameUpdate, onValidateRound);
 
   useImperativeHandle(ref, () => ({
-    triggerValidation: () => {
-      if (onValidateRound && currentRound) {
-        const results = Object.entries(selectedResults).map(([index, result]) => ({
-          gameIndex: parseInt(index),
-          result
-        }));
-        onValidateRound(currentRound.id, results);
-      }
-    }
+    triggerValidation,
   }));
 
-  if (!rounds || rounds.length === 0) {
+
+  if (!games || games.length === 0) {
     return (
       <div className="bg-[#1a1a1a] border border-[#333] rounded-xl p-12 text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
         <p className="text-gray-500">No rounds generated yet.</p>
@@ -38,9 +32,7 @@ const GamesList = forwardRef<GamesListRef, GamesListProps>(({ rounds, onValidate
   }
 
   const currentRound = rounds[currentIndex];
-  console.log("Current Round:", currentRound);
 
-  // Fix for undefined currentRound
   if (!currentRound) {
     return (
       <div className="bg-[#1a1a1a] border border-[#333] rounded-xl p-12 text-center">
@@ -90,12 +82,13 @@ const GamesList = forwardRef<GamesListRef, GamesListProps>(({ rounds, onValidate
       <div className="space-y-3">
         {currentRound.games?.map((game: any, index: number) => (
           <GameAdminCard
-            key={index}
+            key={game.id ?? index}
             gameNumber={game.gameNumber || index + 1}
-            whitePlayer={game.whitePlayer}
-            blackPlayer={game.blackPlayer}
+            whitePlayer={game.white}
+            blackPlayer={game.black}
             status={game.status}
-            isEditable={currentRound.is_current || currentRound.status === 'pending' || currentRound.status === 'active'}
+            presence={game.presence}
+            isEditable={currentRound.status === 'In progress'}
             selectedResult={selectedResults[index]}
             onSelectResult={(result) => handleResultSelect(index, result)}
           />
