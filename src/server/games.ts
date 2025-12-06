@@ -222,16 +222,27 @@ export function generatePairings(players: Player[]): { pairs: { p1: Player; p2: 
 
 	let bye: Player | null = null;
 	if (workingPlayers.length % 2 !== 0) {
-		// Give bye to the lowest ranked player who hasn't had a bye yet
+		// Prioritize absent players for bye first
 		for (let i = workingPlayers.length - 1; i >= 0; i--) {
-			if (workingPlayers[i].byes === 0) {
+			if (!workingPlayers[i].is_present) {
 				bye = workingPlayers[i];
 				workingPlayers.splice(i, 1);
 				break;
 			}
 		}
-		// If everyone has had a bye, just take the last one.
+		// If no absent players, give bye to lowest ranked player who hasn't had a bye yet
 		if (!bye) {
+			for (let i = workingPlayers.length - 1; i >= 0; i--) {
+				if (workingPlayers[i].byes === 0) {
+					bye = workingPlayers[i];
+					workingPlayers.splice(i, 1);
+					break;
+				}
+			}
+		}
+		// If everyone has had a bye, take the one with fewest byes
+		if (!bye) {
+			workingPlayers.sort((a, b) => a.byes - b.byes);
 			bye = workingPlayers.pop()!;
 		}
 	}
@@ -253,7 +264,7 @@ export function generatePairings(players: Player[]): { pairs: { p1: Player; p2: 
 			// Note: opponents is number[], p2.id is number.
 			if (p1.opponents && p1.opponents.some((opId) => Number(opId) === p2.id)) continue;
 
-			// 2. Color Compatibility
+			// 2. Color Compatibility (use olor field)
 			if (!isColorCompatible(p1.color, p2.color)) continue;
 
 			// Match found
@@ -265,12 +276,201 @@ export function generatePairings(players: Player[]): { pairs: { p1: Player; p2: 
 		}
 
 		if (!paired) {
-			console.error(`CRITICAL: Could not pair player ${p1.id} in greedy pass.`);
+			console.error(`CRITICAL: Could not pair player ${p1.id} (${p1.name}) in greedy pass.`);
 			// In a real implementation, we would backtrack here.
+			// For now, log the error and continue
 		}
 	}
 
 	return { pairs, bye };
+}
+
+// --- Round Management Functions ---
+
+export async function generateScheduledRound() {
+	try {
+		// 1. Fetch Players and filter for active and present
+		const allPlayers = await supabase.from('players').select('*');
+		
+		if (allPlayers.error) {
+			throw allPlayers.error;
+		}
+
+		const players = allPlayers.data.filter((p: Player) => p.is_active && p.is_present);
+		
+		if (!players || players.length < 2) {
+			return { success: false, error: 'Not enough active and present players (minimum 2 required)' };
+		}
+
+		// 2. Generate Pairings
+		const { pairs, bye } = generatePairings(players);
+
+		if (pairs.length === 0 && !bye) {
+			return { success: false, error: 'Failed to generate any pairings' };
+		}
+
+		// 3. Determine next round number
+		const { data: maxRoundData } = await supabase
+			.from('games')
+			.select('round')
+			.order('round', { ascending: false })
+			.limit(1)
+			.single();
+		
+		const nextRound = (maxRoundData?.round || 0) + 1;
+
+		// 4. Prepare matches to insert (DO NOT update player stats yet)
+		const matchesToInsert = [];
+		const generateRandomId = () => Math.floor(10000 + Math.random() * 90000);
+
+		for (const pair of pairs) {
+			// Assign Colors
+			const { white, black } = assignMatchColors(pair.p1, pair.p2);
+
+			// Generate unique ID
+			let gameId = generateRandomId();
+			while (matchesToInsert.some(m => m.id === gameId)) {
+				gameId = generateRandomId();
+			}
+
+			// Create Match Record with PENDING status
+			matchesToInsert.push({
+				id: gameId,
+				white: white.id,
+				black: black.id,
+				round: nextRound,
+				status: 'PENDING',
+				presence: 2 // Both players present
+			});
+		}
+
+		// Handle Bye - create with presence: 1
+		if (bye) {
+			let byeGameId = generateRandomId();
+			while (matchesToInsert.some(m => m.id === byeGameId)) {
+				byeGameId = generateRandomId();
+			}
+
+			matchesToInsert.push({
+				id: byeGameId,
+				white: bye.id,
+				black: 0, // Use 0 for bye games instead of null
+				round: nextRound,
+				status: 'PENDING',
+				presence: 1 // BYE game
+			});
+		}
+
+		// 5. Insert Matches (games only, no player stat updates)
+		const { error: matchError } = await supabase
+			.from('games')
+			.insert(matchesToInsert);
+		
+		if (matchError) {
+			console.error('Error inserting matches:', matchError);
+			throw matchError;
+		}
+
+		return { success: true, round: nextRound, gamesCreated: matchesToInsert.length };
+
+	} catch (error) {
+		console.error('Error generating scheduled round:', error);
+		return { success: false, error };
+	}
+}
+
+export async function startScheduledRound() {
+	try {
+		// 1. Get the current round (last round)
+		const currentRound = await getCurrentRound();
+		
+		if (!currentRound) {
+			return { success: false, error: 'No rounds found to start' };
+		}
+
+		// 2. Fetch all games in this round
+		const { data: games, error: gamesError } = await supabase
+			.from('games')
+			.select('*')
+			.eq('round', currentRound);
+
+		if (gamesError || !games || games.length === 0) {
+			return { success: false, error: 'No games found in current round' };
+		}
+
+		// 3. Verify all games are PENDING
+		const nonPendingGames = games.filter(g => g.status !== 'PENDING');
+		if (nonPendingGames.length > 0) {
+			return { success: false, error: 'Round has already been started or has results' };
+		}
+
+		// Round is ready - all player stats will be updated when results are entered
+		return { success: true, round: currentRound };
+
+	} catch (error) {
+		console.error('Error starting scheduled round:', error);
+		return { success: false, error };
+	}
+}
+
+export async function removeLastRound() {
+	try {
+		// 1. Get max round number
+		const { data: maxRoundData, error: maxError } = await supabase
+			.from('games')
+			.select('round')
+			.order('round', { ascending: false })
+			.limit(1)
+			.single();
+		
+		if (maxError || !maxRoundData) {
+			return { success: false, error: 'No rounds to delete' };
+		}
+		
+		const lastRound = maxRoundData.round;
+		
+		// 2. Fetch all games in last round
+		const { data: games, error: fetchError } = await supabase
+			.from('games')
+			.select('*')
+			.eq('round', lastRound);
+		
+		if (fetchError || !games || games.length === 0) {
+			return { success: false, error: 'Failed to fetch round games' };
+		}
+		
+		// 3. Check if any game has results entered
+		const hasResults = games.some(g => 
+			g.status !== 'PENDING' && g.status !== 'scheduled'
+		);
+		
+		if (hasResults) {
+			// 4a. Round has results - FULL ROLLBACK required
+			// Use deleteGameById for each game which handles all stat reversions
+			for (const game of games) {
+				await deleteGameById(game.id);
+			}
+		} else {
+			// 4b. Round is PENDING - Simple delete, no stat updates needed
+			// (opponents and streaks are only updated when results are entered)
+			
+			const { error: deleteError } = await supabase
+				.from('games')
+				.delete()
+				.eq('round', lastRound);
+			
+			if (deleteError) {
+				console.error('Error deleting games:', deleteError);
+				return { success: false, error: 'Failed to delete games' };
+			}
+		}
+		
+		return { success: true, round: lastRound };
+		
+	} catch (error) {
+		console.error('Error removing last round:', error);
+		return { success: false, error };
+	}
 }
 
 export async function addGame(whiteId: number, blackId: number, result?: string) {
@@ -307,8 +507,8 @@ export async function addGame(whiteId: number, blackId: number, result?: string)
 			status = 'DRAW';
 		}
 
-		// Generate a random 4-digit ID
-		const generateRandomId = () => Math.floor(1000 + Math.random() * 9000);
+		// Generate a random 5-digit ID
+		const generateRandomId = () => Math.floor(10000 + Math.random() * 90000);
 		let gameId = generateRandomId();
 		
 		// Ensure ID is unique by checking if it exists

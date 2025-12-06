@@ -34,14 +34,32 @@ export async function updateGameResult(
     const whitePlayer = whitePlayerData.data;
     const blackPlayer = blackPlayerData.data;
 
-    // Initialize stat changes (will accumulate undo + new)
+    // Initialize stat changes
     let whiteUpdates: any = {};
     let blackUpdates: any = {};
 
-    // 3. UNDO LOGIC - Revert the old game state if it wasn't PENDING
     const oldStatus = currentGame.status;
     const oldPresence = currentGame.presence || 2;
+    const isFirstResult = oldStatus === 'PENDING';
     
+    // 3. FIRST RESULT ENTRY - Add opponents, color streaks, and games count
+    if (isFirstResult && presence === 2 && blackId !== 0) {
+        // Add to opponents arrays
+        whiteUpdates.opponents = [...(whitePlayer.opponents || []), blackId];
+        blackUpdates.opponents = [...(blackPlayer.opponents || []), whiteId];
+        
+        // Calculate and update color streaks
+        const whiteNewStreak = whitePlayer.color === 1 ? 2 : 1; // White plays white
+        const blackNewStreak = blackPlayer.color === -1 ? -2 : -1; // Black plays black
+        whiteUpdates.color = whiteNewStreak;
+        blackUpdates.color = blackNewStreak;
+        
+        // Increment games count
+        whiteUpdates.games = (whitePlayer.games || 0) + 1;
+        blackUpdates.games = (blackPlayer.games || 0) + 1;
+    }
+    
+    // 4. UNDO OLD RESULT (if not PENDING)
     if (oldStatus !== 'PENDING') {
         // Revert wins/losses/draws based on old status
         if (oldStatus === 'WHITE_WINS') {
@@ -64,13 +82,9 @@ export async function updateGameResult(
             whiteUpdates.draws = Math.max(0, whitePlayer.draws - 1);
             blackUpdates.draws = Math.max(0, blackPlayer.draws - 1);
         }
-
-        // Don't revert opponents or games count - they played regardless
-        // Opponents list stays (they did face each other)
-        // Games count stays (the game happened)
     }
 
-    // 4. APPLY NEW LOGIC - Add new result stats
+    // 5. APPLY NEW RESULT
     if (result === 'WHITE_WINS') {
         whiteUpdates.wins = (whiteUpdates.wins !== undefined ? whiteUpdates.wins : whitePlayer.wins) + 1;
         blackUpdates.losses = (blackUpdates.losses !== undefined ? blackUpdates.losses : blackPlayer.losses) + 1;
@@ -92,7 +106,7 @@ export async function updateGameResult(
         blackUpdates.draws = (blackUpdates.draws !== undefined ? blackUpdates.draws : blackPlayer.draws) + 1;
     }
 
-    // 5. Update game status and presence in database
+    // 6. Update game status and presence in database
     const { error: updateError } = await supabase
         .from('games')
         .update({ status: result, presence: presence })
@@ -103,7 +117,7 @@ export async function updateGameResult(
         throw new Error('Failed to update game');
     }
 
-    // 6. Update white player stats
+    // 7. Update white player stats
     if (Object.keys(whiteUpdates).length > 0) {
         const { error: whiteError } = await supabase
             .from('players')
@@ -116,7 +130,7 @@ export async function updateGameResult(
         }
     }
 
-    // 7. Update black player stats
+    // 8. Update black player stats
     if (Object.keys(blackUpdates).length > 0) {
         const { error: blackError } = await supabase
             .from('players')

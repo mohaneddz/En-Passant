@@ -4,17 +4,21 @@ import { Button } from "@/components/ui/button";
 interface TabNavigationProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
-  onNextPhase?: () => void;
-  onUndo?: () => void;
-  nextPhaseDisabled?: boolean;
+  onGenerateRound?: () => void;
+  onStartRound?: () => void;
+  onRemoveLastRound?: () => void;
+  generateDisabled?: boolean;
+  startDisabled?: boolean;
 }
 
 const TabNavigation: React.FC<TabNavigationProps> = ({ 
   activeTab, 
   setActiveTab, 
-  onNextPhase,
-  onUndo,
-  nextPhaseDisabled = false
+  onGenerateRound,
+  onStartRound,
+  onRemoveLastRound,
+  generateDisabled = false,
+  startDisabled = false
 }) => {
   const containerClass = "flex gap-1 bg-[#1a1a1a] p-1 rounded-xl w-fit border border-[#333]";
   const activeClass = "bg-[#fbbf24] text-black shadow-lg shadow-yellow-500/20 hover:bg-yellow-400";
@@ -41,22 +45,15 @@ const TabNavigation: React.FC<TabNavigationProps> = ({
       </div>
       <div className={containerClass}>
         <Button 
-          onClick={onNextPhase}
-          disabled={nextPhaseDisabled}
-          className={`${activeClass} ${nextPhaseDisabled ? disabledClass + " bg-gray-800 text-gray-500" : ""}`}
+          onClick={onGenerateRound}
+          disabled={generateDisabled}
+          className={`${activeClass} ${generateDisabled ? disabledClass + " bg-gray-800 text-gray-500" : ""}`}
         >
-          Start New Round
+          Start Next Round
         </Button>
         <Button 
-          onClick={onNextPhase}
-          disabled={nextPhaseDisabled}
-          className={`${activeClass} ${nextPhaseDisabled ? disabledClass + " bg-gray-800 text-gray-500" : ""}`}
-        >
-          Generate Rounds
-        </Button>
-        <Button 
-          onClick={onUndo} 
-          className="bg-gray-700/70 text-white shadow-lg shadow-gray-500/20 hover:bg-gray-600/70"
+          onClick={onRemoveLastRound} 
+          className="bg-red-700/70 text-white shadow-lg shadow-red-500/20 hover:bg-red-600/70"
         >
           Remove Last Round
         </Button>

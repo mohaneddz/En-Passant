@@ -3,6 +3,10 @@ import { supabase } from '@/lib/supabase/client';
 import { getPlayers, updatePlayerStreaks } from './players';
 import { generatePairings, assignMatchColors, calculateNextStreak } from './games';
 
+/**
+ * @deprecated This function is deprecated. Use generateScheduledRound() and startScheduledRound() from games.ts instead.
+ * This maintains the old single-phase approach which has been replaced by a two-phase system.
+ */
 export async function generateNextRound() {
 	try {
         // 1. Fetch Players
@@ -41,8 +45,8 @@ export async function generateNextRound() {
             });
 
             // Calculate New Streaks
-            const whiteNewStreak = calculateNextStreak(white.olor || 0, 'white');
-            const blackNewStreak = calculateNextStreak(black.olor || 0, 'black');
+            const whiteNewStreak = calculateNextStreak(white.color || 0, 'white');
+            const blackNewStreak = calculateNextStreak(black.color || 0, 'black');
 
             streakUpdates.push({ playerId: white.id, newStreak: whiteNewStreak });
             streakUpdates.push({ playerId: black.id, newStreak: blackNewStreak });

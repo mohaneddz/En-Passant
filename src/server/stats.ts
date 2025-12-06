@@ -11,7 +11,7 @@ export interface StatsGridProps {
 
 export async function getStats() {
 
-    const { data: playersData, error: playersDrror } = await supabase.from('players').select('*');
+    const { data: playersData, error: playersDrror } = await supabase.from('players').select('*').neq('is_active', false);
 	const { data: gamesData, error: gamesRrror } = await supabase.from('games').select('*');
 
   // console.log(playersData, gamesData);

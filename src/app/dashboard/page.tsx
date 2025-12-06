@@ -21,17 +21,21 @@ export default function ChessDashboard() {
     activeTab,
     setActiveTab,
     players,
-    showNextPhaseDialog,
-    setShowNextPhaseDialog,
-    setShowUndoDialog,
+    showGenerateDialog,
+    setShowGenerateDialog,
+    showStartDialog,
+    setShowStartDialog,
+    showRemoveDialog,
+    setShowRemoveDialog,
+    hasPendingRound,
     gamesListRef,
     stats,
-    isNextPhaseDisabled,
     handleAddPlayer,
     handleAddGame,
     handleDeletePlayer,
-    handleNextPhase,
-    // handleUndoPhase,
+    handleGenerateRound,
+    handleStartRound,
+    handleRemoveLastRound,
     fetchPlayers,
     fetchStats,
     fetchRounds,
@@ -62,31 +66,43 @@ export default function ChessDashboard() {
         <TabNavigation
           activeTab={activeTab}
           setActiveTab={setActiveTab}
-          onNextPhase={() => setShowNextPhaseDialog(true)}
-          onUndo={() => setShowUndoDialog(true)}
-          nextPhaseDisabled={isNextPhaseDisabled}
+          onGenerateRound={() => setShowGenerateDialog(true)}
+          onStartRound={() => setShowStartDialog(true)}
+          onRemoveLastRound={() => setShowRemoveDialog(true)}
+          generateDisabled={hasPendingRound}
+          startDisabled={!hasPendingRound}
         />
 
-        {/* Dialogs moved here to be accessible from any tab */}
+        {/* Dialogs for round management */}
         <SimpleDialog
-          isOpen={showNextPhaseDialog}
-          onClose={() => setShowNextPhaseDialog(false)}
-          onConfirm={handleNextPhase}
-          title="Start Next Phase?"
-          description="This will generate pairings for the next round based on current standings."
-          confirmText="Start"
+          isOpen={showGenerateDialog}
+          onClose={() => setShowGenerateDialog(false)}
+          onConfirm={handleGenerateRound}
+          title="Generate New Round?"
+          description="This will create pairings for the next round. You can review them before starting the round."
+          confirmText="Generate"
           confirmColor="bg-[#fbbf24] hover:bg-[#fbbf24]/90"
         />
 
-        {/* <SimpleDialog
-          isOpen={showUndoDialog}
-          onClose={() => setShowUndoDialog(false)}
-          onConfirm={handleUndoPhase}
-          title="Undo Last Phase?"
-          description="This will revert the tournament to the previous state. Are you sure?"
-          confirmText="Undo"
+        <SimpleDialog
+          isOpen={showStartDialog}
+          onClose={() => setShowStartDialog(false)}
+          onConfirm={handleStartRound}
+          title="Start Round?"
+          description="This will officially start the round and update player stats. Make sure the pairings are correct."
+          confirmText="Start Round"
+          confirmColor="bg-green-600 hover:bg-green-700"
+        />
+
+        <SimpleDialog
+          isOpen={showRemoveDialog}
+          onClose={() => setShowRemoveDialog(false)}
+          onConfirm={handleRemoveLastRound}
+          title="Remove Last Round?"
+          description="This will delete the last round and revert all changes. This action cannot be undone."
+          confirmText="Remove"
           confirmColor="bg-red-600 hover:bg-red-700"
-        /> */}
+        />
 
         {activeTab === 'players' && (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
