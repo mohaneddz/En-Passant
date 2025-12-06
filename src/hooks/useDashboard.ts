@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { getPlayers, addPlayer, deletePlayer, editPlayer, restorePlayer,resetAllPlayers } from '@/server/players';
+import { getPlayers, addPlayer, deletePlayer, editPlayer, restorePlayer,resetAllPlayers, markAbsent, markPresent, getPlayerById } from '@/server/players';
 import { getStats, StatsGridProps } from '@/server/stats';
 import { generateNextRound } from '@/server/actions';
 import { GamesListRef } from '@/components/dashboard/GamesList';
@@ -31,6 +31,23 @@ export const useDashboard = () => {
 			console.error('Error resetting players:', error);
 		}
 	}
+
+	const handleAbsentPlayer = async (id: number) => {
+		// # if the user is present, mark them absent; if absent, mark present
+		try {
+			const player = await getPlayerById(id);
+			if (player.is_present) {
+				await markAbsent(id);
+			} else {
+				await markPresent(id);
+			}
+			await fetchPlayers();
+		}
+		catch (error) {
+			console.error('Error toggling player presence:', error);
+		}
+	};
+
 
 	const [stats, setStats] = useState<StatsGridProps['stats']>({
 		totalPlayers: null,
@@ -147,6 +164,7 @@ export const useDashboard = () => {
 		fetchStats,
 		fetchRounds,
 		handleRestorePlayer,
-		handleResetAllPlayers
+		handleResetAllPlayers,
+		handleAbsentPlayer
 	};
 };

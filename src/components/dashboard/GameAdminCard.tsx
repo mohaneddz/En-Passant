@@ -65,7 +65,7 @@ export default function GameAdminCard({
         {/* Player with Bye */}
         <div className="flex-1 flex items-center justify-start gap-3 w-full">
           <div className="text-sm font-medium text-[#FCD34D] truncate">
-            {whitePlayer}
+            {white}
           </div>
           <div className="text-xs text-gray-500 italic">
             receives a bye (1 point)

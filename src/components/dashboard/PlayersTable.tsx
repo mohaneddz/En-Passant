@@ -10,9 +10,10 @@ interface PlayersTableProps {
   onRestore: (id: number) => void;
   onRefresh: () => void;
   onReset: () => void;
+  onAbsent: (id: number) => void;
 }
 
-export default function PlayersTable({ players, onDelete, onRestore, onRefresh, onReset }: PlayersTableProps) {
+export default function PlayersTable({ players, onDelete, onRestore, onRefresh, onReset, onAbsent }: PlayersTableProps) {
   return (
     <div className="bg-[#1a1a1a] border border-[#333] rounded-xl overflow-hidden">
       <div className="p-8 border-b border-[#333]">
@@ -59,6 +60,7 @@ export default function PlayersTable({ players, onDelete, onRestore, onRefresh, 
                 player={player}
                 onDelete={onDelete}
                 onRestore={onRestore}
+                onAbsent={onAbsent}
               />
             ))}
           </tbody>

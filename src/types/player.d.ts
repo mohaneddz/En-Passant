@@ -11,6 +11,7 @@ export interface Player {
   color_streak: number; // Signed streak counter (+1, +2, -1, -2)
   byes: number;     // smallint
   is_active: boolean; // Active status
+  is_present: boolean; // Present status
 
   // Computed properties
   score?: number;

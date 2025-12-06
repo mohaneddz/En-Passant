@@ -37,6 +37,23 @@ export async function restorePlayer(id: number) {
 	return data;
 }
 
+export async function markAbsent(id: number) {
+	const { data, error } = await supabase.from('players').update({ is_present: false }).eq('id', id);
+	if (error) {
+		throw error;
+	}
+	return data;
+}
+
+export async function markPresent(id: number) {
+	const { data, error } = await supabase.from('players').update({ is_present: true }).eq('id', id);
+	if (error) {
+		throw error;
+	}
+	return data;
+}
+
+
 export async function editPlayer(data: Player) {
 	const { data: updatedData, error } = await supabase.from('players').update(data).eq('id', data.id);
 	if (error) {

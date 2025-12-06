@@ -34,7 +34,8 @@ export default function ChessDashboard() {
     fetchStats,
     fetchRounds,
     handleRestorePlayer,
-    handleResetAllPlayers
+    handleResetAllPlayers,
+    handleAbsentPlayer,
   } = useDashboard();
 
   const [games, setGames] = useState<any[]>([]);
@@ -94,6 +95,7 @@ export default function ChessDashboard() {
               onRefresh={fetchPlayers}
               onRestore={handleRestorePlayer}
               onReset={handleResetAllPlayers}
+              onAbsent={handleAbsentPlayer}
             />
           </div>
         )}

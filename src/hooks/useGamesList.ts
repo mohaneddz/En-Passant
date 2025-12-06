@@ -19,12 +19,16 @@ export const useGamesList = (games: any[], onGameUpdate?: () => void, onValidate
       const round = roundsMap.get(roundId);
       round.games.push(game);
 
-      if (!game.result) {
-        round.status = 'In progress';
-      }
     });
 
-    return Array.from(roundsMap.values()).sort((a: any, b: any) => Number(a.id) - Number(b.id));
+    const sortedRounds = Array.from(roundsMap.values()).sort((a: any, b: any) => Number(a.id) - Number(b.id));
+    
+    // Set the last round's status to 'In progress'
+    if (sortedRounds.length > 0) {
+      sortedRounds[sortedRounds.length - 1].status = 'In progress';
+    }
+
+    return sortedRounds;
   }, [games]);
 
   const [currentIndex, setCurrentIndex] = useState(0);
