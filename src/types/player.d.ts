@@ -16,4 +16,5 @@ export interface Player {
   // Computed properties
   score?: number;
   rank?: number;
+  buchholz?: number;
 };

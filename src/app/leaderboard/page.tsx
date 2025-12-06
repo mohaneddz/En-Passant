@@ -16,8 +16,12 @@ export default function LeaderboardPage() {
     const loadData = async () => {
       try {
         const data = await getLeaderboard();
-        // Sort by score descending
-        const sorted = data.sort((a, b) => (b.score || 0) - (a.score || 0));
+        // Sort by score descending, then Buchholz (tiebreaker), then rating
+        const sorted = data.sort((a, b) => {
+          if ((b.score || 0) !== (a.score || 0)) return (b.score || 0) - (a.score || 0);
+          if ((b.buchholz || 0) !== (a.buchholz || 0)) return (b.buchholz || 0) - (a.buchholz || 0);
+          return (b.rating || 0) - (a.rating || 0);
+        });
         // Assign rank
         const ranked = sorted.map((p, i) => ({ ...p, rank: i + 1 }));
         setPlayers(ranked);

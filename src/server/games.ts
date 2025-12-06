@@ -446,9 +446,10 @@ function backtrackPair(
  * - Proper bye handling
  */
 export function generatePairings(players: Player[]): { pairs: { p1: Player; p2: Player }[]; bye: Player | null } {
-	// Sort all players by score (desc) then rating (desc)
+	// Sort all players by score (desc), then Buchholz (desc), then rating (desc)
 	const sortedPlayers = [...players].sort((a, b) => {
 		if ((a.score || 0) !== (b.score || 0)) return (b.score || 0) - (a.score || 0);
+		if ((a.buchholz || 0) !== (b.buchholz || 0)) return (b.buchholz || 0) - (a.buchholz || 0);
 		return (b.rating || 0) - (a.rating || 0);
 	});
 
