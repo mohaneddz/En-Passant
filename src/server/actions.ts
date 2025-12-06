@@ -41,8 +41,8 @@ export async function generateNextRound() {
             });
 
             // Calculate New Streaks
-            const whiteNewStreak = calculateNextStreak(white.color_streak || 0, 'white');
-            const blackNewStreak = calculateNextStreak(black.color_streak || 0, 'black');
+            const whiteNewStreak = calculateNextStreak(white.olor || 0, 'white');
+            const blackNewStreak = calculateNextStreak(black.olor || 0, 'black');
 
             streakUpdates.push({ playerId: white.id, newStreak: whiteNewStreak });
             streakUpdates.push({ playerId: black.id, newStreak: blackNewStreak });
@@ -55,7 +55,8 @@ export async function generateNextRound() {
                 black: null, // Assuming nullable for Bye
                 round: nextRound,
                 status: 'bye',
-                result: '1-0' // Auto-win for bye
+                result: '1-0', // Auto-win for bye
+                presence: 1 // Mark as BYE game (one player absent)
             });
             // Bye gives no color change, so we don't add to streakUpdates
         }

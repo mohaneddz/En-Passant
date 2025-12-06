@@ -8,6 +8,7 @@ import Header from '@/components/dashboard/Header';
 import StatsGrid from '@/components/dashboard/StatsGrid';
 import TabNavigation from '@/components/dashboard/TabNavigation';
 import AddPlayerForm from '@/components/dashboard/AddPlayerForm';
+import AddGameForm from '@/components/dashboard/AddGameForm';
 import PlayersTable from '@/components/dashboard/PlayersTable';
 import GamesList from '@/components/dashboard/GamesList';
 
@@ -27,6 +28,7 @@ export default function ChessDashboard() {
     stats,
     isNextPhaseDisabled,
     handleAddPlayer,
+    handleAddGame,
     handleDeletePlayer,
     handleNextPhase,
     // handleUndoPhase,
@@ -102,6 +104,10 @@ export default function ChessDashboard() {
 
         {activeTab === 'games' && (
           <div className="space-y-4">
+            <AddGameForm 
+              players={players} 
+              onAddGame={handleAddGame} 
+            />
             <GamesList
               ref={gamesListRef}
               games={games}

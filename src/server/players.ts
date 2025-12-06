@@ -117,7 +117,7 @@ export async function updatePlayerStreaks(updates: { playerId: number, newStreak
     const promises = updates.map(({ playerId, newStreak }) => 
         supabase
             .from('players')
-            .update({ color_streak: newStreak })
+            .update({ olor: newStreak })
             .eq('id', playerId)
     );
 

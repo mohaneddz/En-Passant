@@ -14,7 +14,7 @@ export async function getStats() {
     const { data: playersData, error: playersDrror } = await supabase.from('players').select('*');
 	const { data: gamesData, error: gamesRrror } = await supabase.from('games').select('*');
 
-  console.log(playersData, gamesData);
+  // console.log(playersData, gamesData);
 
     const result = {
         totalPlayers: playersData?.length,

@@ -19,9 +19,6 @@ export default async function Page() {
         const round = roundsMap.get(roundId);
         round.games.push(game);
 
-        if (!game.result) {
-            round.status = 'In progress';
-        }
     });
 
     const allRounds = Array.from(roundsMap.values()).sort((a: any, b: any) => Number(a.id) - Number(b.id));

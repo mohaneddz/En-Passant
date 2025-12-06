@@ -3,6 +3,8 @@ import { ChevronLeft, ChevronRight, Swords } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useGamesList } from '@/hooks/useGamesList';
 
+import { deleteGameById } from '@/server/games';
+
 import GameAdminCard from '@/components/dashboard/GameAdminCard';
 
 interface GamesListProps {
@@ -16,7 +18,7 @@ export interface GamesListRef {
 }
 
 const GamesList = forwardRef<GamesListRef, GamesListProps>(({ games, onValidateRound, onGameUpdate }, ref) => {
-  const { rounds, currentIndex, selectedResults, nextRound, prevRound, handleResultSelect, triggerValidation } = useGamesList(games, onGameUpdate, onValidateRound);
+  const { rounds, currentIndex, selectedResults, selectedByes, nextRound, prevRound, handleResultSelect, triggerValidation } = useGamesList(games, onGameUpdate, onValidateRound);
 
   useImperativeHandle(ref, () => ({
     triggerValidation,
@@ -90,7 +92,12 @@ const GamesList = forwardRef<GamesListRef, GamesListProps>(({ games, onValidateR
             presence={game.presence}
             isEditable={currentRound.status === 'In progress'}
             selectedResult={selectedResults[index]}
-            onSelectResult={(result) => handleResultSelect(index, result)}
+            isBye={selectedByes[index]}
+            onSelectResult={(result, isBye) => handleResultSelect(index, result, isBye, game)}
+            onDelete={async () => {
+              await deleteGameById(game.id);
+              if (onGameUpdate) onGameUpdate();
+            }}
           />
         ))}
       </div>

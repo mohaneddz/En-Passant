@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { getPlayers, addPlayer, deletePlayer, editPlayer, restorePlayer,resetAllPlayers, markAbsent, markPresent, getPlayerById } from '@/server/players';
 import { getStats, StatsGridProps } from '@/server/stats';
 import { generateNextRound } from '@/server/actions';
+import { addGame } from '@/server/games';
 import { GamesListRef } from '@/components/dashboard/GamesList';
 
 import { Player } from '@/types/player';
@@ -97,6 +98,16 @@ export const useDashboard = () => {
 		}
 	};
 
+	const handleAddGame = async (game: { whiteId: number; blackId: number; result?: string }) => {
+		try {
+			await addGame(game.whiteId, game.blackId, game.result);
+			await fetchPlayers();
+			await fetchStats();
+		} catch (error) {
+			console.error('Error adding game:', error);
+		}
+	};
+
 	const handleDeletePlayer = async (id: number) => {
 		try {
 			await deletePlayer(id);
@@ -157,6 +168,7 @@ export const useDashboard = () => {
 		stats,
 		isNextPhaseDisabled,
 		handleAddPlayer,
+		handleAddGame,
 		handleDeletePlayer,
 		handleNextPhase,
 		// handleUndoPhase,
