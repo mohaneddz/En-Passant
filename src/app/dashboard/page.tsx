@@ -1,26 +1,27 @@
-"use client";
+﻿"use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
-import { useDashboard } from '@/hooks/useDashboard';
+import { useDashboard } from "@/hooks/useDashboard";
 
-import Header from '@/components/dashboard/Header';
-import StatsGrid from '@/components/dashboard/StatsGrid';
-import TabNavigation from '@/components/dashboard/TabNavigation';
-import AddPlayerForm from '@/components/dashboard/AddPlayerForm';
-import AddGameForm from '@/components/dashboard/AddGameForm';
-import PlayersTable from '@/components/dashboard/PlayersTable';
-import GamesList from '@/components/dashboard/GamesList';
+import Header from "@/components/dashboard/Header";
+import StatsGrid from "@/components/dashboard/StatsGrid";
+import TabNavigation from "@/components/dashboard/TabNavigation";
+import AddPlayerForm from "@/components/dashboard/AddPlayerForm";
+import AddGameForm from "@/components/dashboard/AddGameForm";
+import PlayersTable from "@/components/dashboard/PlayersTable";
+import GamesList from "@/components/dashboard/GamesList";
 
-import {getGames} from '@/server/games';
+import { getGames } from "@/server/games";
 
-import SimpleDialog from '@/components/SimpleDialog';
+import SimpleDialog from "@/components/SimpleDialog";
 
 export default function ChessDashboard() {
   const {
     activeTab,
     setActiveTab,
     players,
+    loading,
     showGenerateDialog,
     setShowGenerateDialog,
     showStartDialog,
@@ -31,6 +32,7 @@ export default function ChessDashboard() {
     gamesListRef,
     stats,
     handleAddPlayer,
+    handleImportPlayers,
     handleAddGame,
     handleDeletePlayer,
     handleGenerateRound,
@@ -44,16 +46,24 @@ export default function ChessDashboard() {
     handleAbsentPlayer,
   } = useDashboard();
 
-  const [games, setGames] = useState<any[]>([]);
+  const [games, setGames] = useState<
+    Array<{
+      id: number;
+      white: number;
+      black: number;
+      status: "PENDING" | "DRAW" | "WHITE_WINS" | "BLACK_WINS";
+      presence: number;
+      round: number;
+    }>
+  >([]);
+
+  const refreshGames = async () => {
+    const data = await getGames();
+    setGames(data);
+  };
 
   useEffect(() => {
-    let mounted = true;
-    getGames().then((g) => {
-      if (mounted) setGames(g);
-    });
-    return () => {
-      mounted = false;
-    };
+    refreshGames();
   }, []);
 
   return (
@@ -61,6 +71,21 @@ export default function ChessDashboard() {
       <Header />
 
       <main className="max-w-7xl mx-auto px-8 py-10">
+        {loading ? (
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+              <div className="h-24 animate-pulse rounded-lg bg-[#2a2a2a]" />
+              <div className="h-24 animate-pulse rounded-lg bg-[#2a2a2a]" />
+              <div className="h-24 animate-pulse rounded-lg bg-[#2a2a2a]" />
+              <div className="h-24 animate-pulse rounded-lg bg-[#2a2a2a]" />
+            </div>
+            <div className="h-14 animate-pulse rounded-lg bg-[#2a2a2a]" />
+            <div className="h-20 animate-pulse rounded-lg bg-[#2a2a2a]" />
+            <div className="h-20 animate-pulse rounded-lg bg-[#2a2a2a]" />
+            <div className="h-20 animate-pulse rounded-lg bg-[#2a2a2a]" />
+          </div>
+        ) : (
+          <>
         <StatsGrid stats={stats} />
 
         <TabNavigation
@@ -73,11 +98,13 @@ export default function ChessDashboard() {
           startDisabled={!hasPendingRound}
         />
 
-        {/* Dialogs for round management */}
         <SimpleDialog
           isOpen={showGenerateDialog}
           onClose={() => setShowGenerateDialog(false)}
-          onConfirm={handleGenerateRound}
+          onConfirm={async () => {
+            await handleGenerateRound();
+            await refreshGames();
+          }}
           title="Generate New Round?"
           description="This will create pairings for the next round. You can review them before starting the round."
           confirmText="Generate"
@@ -87,9 +114,12 @@ export default function ChessDashboard() {
         <SimpleDialog
           isOpen={showStartDialog}
           onClose={() => setShowStartDialog(false)}
-          onConfirm={handleStartRound}
+          onConfirm={async () => {
+            await handleStartRound();
+            await refreshGames();
+          }}
           title="Start Round?"
-          description="This will officially start the round and update player stats. Make sure the pairings are correct."
+          description="This will officially start the round for result entry."
           confirmText="Start Round"
           confirmColor="bg-green-600 hover:bg-green-700"
         />
@@ -97,16 +127,22 @@ export default function ChessDashboard() {
         <SimpleDialog
           isOpen={showRemoveDialog}
           onClose={() => setShowRemoveDialog(false)}
-          onConfirm={handleRemoveLastRound}
+          onConfirm={async () => {
+            await handleRemoveLastRound();
+            await refreshGames();
+          }}
           title="Remove Last Round?"
-          description="This will delete the last round and revert all changes. This action cannot be undone."
+          description="This will delete the entire latest round. This action cannot be undone."
           confirmText="Remove"
           confirmColor="bg-red-600 hover:bg-red-700"
         />
 
-        {activeTab === 'players' && (
+        {activeTab === "players" && (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <AddPlayerForm onAddPlayer={handleAddPlayer} />
+            <AddPlayerForm
+              onAddPlayer={handleAddPlayer}
+              onImportPlayers={handleImportPlayers}
+            />
             <PlayersTable
               players={players}
               onDelete={handleDeletePlayer}
@@ -118,21 +154,25 @@ export default function ChessDashboard() {
           </div>
         )}
 
-        {activeTab === 'games' && (
+        {activeTab === "games" && (
           <div className="space-y-4">
-            <AddGameForm 
-              players={players} 
-              onAddGame={handleAddGame} 
+            <AddGameForm
+              players={players}
+              onAddGame={async (game) => {
+                await handleAddGame(game);
+                await refreshGames();
+              }}
             />
             <GamesList
               ref={gamesListRef}
               games={games}
-              onGameUpdate={() => {
-                fetchStats();
-                fetchRounds();
+              onGameUpdate={async () => {
+                await Promise.all([fetchStats(), fetchRounds(), refreshGames()]);
               }}
             />
           </div>
+        )}
+          </>
         )}
       </main>
     </div>

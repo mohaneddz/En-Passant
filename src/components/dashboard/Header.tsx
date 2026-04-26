@@ -1,22 +1,15 @@
-"use client";
+﻿"use client";
 
 import React from "react";
 import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
-import { supabase } from "@/lib/supabase/client";
 
 const Header = () => {
   const router = useRouter();
 
   const handleLogout = async () => {
-    // Sign out on the client side
-    await supabase.auth.signOut();
-
-    // Also clear the server-side session cookies
-    await fetch("/api/auth/sign-out", { method: "POST" });
-
-    // Redirect to the home page
-    router.replace("/");
+    await fetch("/api/auth/logout", { method: "POST" });
+    router.replace("/login");
   };
 
   return (

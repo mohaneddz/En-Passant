@@ -26,6 +26,7 @@ export default function LeaderboardPage() {
         const ranked = sorted.map((p, i) => ({ ...p, rank: i + 1 }));
         setPlayers(ranked);
       } catch (err) {
+        console.error(err);
         setError("Failed to load leaderboard");
       } finally {
         setLoading(false);
@@ -34,8 +35,48 @@ export default function LeaderboardPage() {
     loadData();
   }, []);
 
-  if (loading) return <div className="min-h-screen text-white p-10 flex items-center justify-center">Loading...</div>;
-  if (error) return <div className="min-h-screen text-white p-10 flex items-center justify-center">Error: {error}</div>;
+  if (loading) {
+    return (
+      <div className="min-h-screen px-10 py-10 text-white">
+        <div className="mx-auto max-w-5xl space-y-8">
+          <div className="space-y-3 text-center">
+            <div className="mx-auto h-12 w-12 animate-pulse rounded-full bg-[#2a2a2a]" />
+            <div className="mx-auto h-10 w-72 animate-pulse rounded bg-[#2a2a2a]" />
+            <div className="mx-auto h-4 w-40 animate-pulse rounded bg-[#2a2a2a]" />
+          </div>
+
+          <div className="rounded-xl border border-[#333] bg-[#1a1a1a] p-5">
+            <div className="space-y-3">
+              <div className="h-10 animate-pulse rounded bg-[#2a2a2a]" />
+              <div className="h-10 animate-pulse rounded bg-[#2a2a2a]" />
+              <div className="h-10 animate-pulse rounded bg-[#2a2a2a]" />
+              <div className="h-10 animate-pulse rounded bg-[#2a2a2a]" />
+              <div className="h-10 animate-pulse rounded bg-[#2a2a2a]" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen px-10 py-10 text-white">
+        <div className="mx-auto max-w-3xl rounded-2xl border border-[#2b2b2b] bg-[#171717] p-10 shadow-xl">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-red-400">Leaderboard Error</p>
+          <h1 className="mb-4 text-3xl font-bold">Could not load leaderboard</h1>
+          <p className="mb-6 text-gray-300">{error}</p>
+          <button
+            type="button"
+            className="rounded-lg bg-[#fbbf24] px-4 py-2 font-semibold text-black transition hover:bg-[#fcd34d]"
+            onClick={() => window.location.reload()}
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen text-white p-10 font-sans flex flex-col items-center">

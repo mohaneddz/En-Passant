@@ -2,6 +2,8 @@ import { Swords } from "lucide-react";
 import { getGames } from "@/server/games";
 import GamesTabs from "@/components/GamesTabs";
 
+export const dynamic = "force-dynamic";
+
 export default async function Page() {
     const games = await getGames();
 

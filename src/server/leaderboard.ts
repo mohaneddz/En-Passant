@@ -1,29 +1,28 @@
-'use server';
-import { supabase } from '@/lib/supabase/client';
-import { calculateBuchholzScores } from './players';
+﻿import { supabase } from "@/lib/supabase/client";
+import { MatchRecord } from "@/types/game";
+import { derivePlayers, PlayerRow, sortByStandings } from "./tournament";
 
 export async function getLeaderboard() {
-	const { data, error } = await supabase
-		.from('players')
-		.select('*')
-		.eq('is_active', true)
+  const [playersResult, matchesResult] = await Promise.all([
+    supabase.from("players").select("*"),
+    supabase.from("matches").select("*"),
+  ]);
 
-	if (error) {
-		throw new Error('Failed to fetch leaderboard data');
-	}
+  if (playersResult.error) {
+    throw new Error(playersResult.error.message);
+  }
 
-	// Calculate score and Buchholz scores dynamically
-	const leaderboard = await Promise.all(
-		data.map(async (player) => {
-			const score = (player.wins || 0) + (player.byes || 0) + (player.draws || 0) * 0.5;
-			const buchholz = await calculateBuchholzScores(player.id);
-			return {
-				...player,
-				score,
-				buchholz,
-			};
-		})
-	);
+  if (matchesResult.error) {
+    throw new Error(matchesResult.error.message);
+  }
 
-	return leaderboard;
+  const players = derivePlayers(
+    (playersResult.data || []) as PlayerRow[],
+    (matchesResult.data || []) as MatchRecord[]
+  ).filter((player) => player.is_active);
+
+  return sortByStandings(players).map((player, index) => ({
+    ...player,
+    rank: index + 1,
+  }));
 }

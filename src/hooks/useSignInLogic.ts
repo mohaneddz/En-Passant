@@ -1,6 +1,5 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { supabase } from "@/lib/supabase/client";
 
 export function useSignInLogic() {
   const router = useRouter();
@@ -17,35 +16,25 @@ export function useSignInLogic() {
     e.preventDefault();
     setLoading(true);
     setMessage(null);
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (error) {
-        setMessage(error.message);
-      } else {
-        const session = data.session;
-        if (session?.access_token && session?.refresh_token) {
-          const res = await fetch("/api/auth/set-session", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              access_token: session.access_token,
-              refresh_token: session.refresh_token,
-            }),
-          });
 
-          if (!res.ok) {
-            const err = await res.json().catch(() => ({}));
-            setMessage(err?.error || "Failed to set server session");
-            return;
-          }
-        }
-        router.replace(redirectPath);
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => ({}))) as {
+          error?: string;
+        };
+        setMessage(payload.error || "Login failed.");
+        return;
       }
-    } catch (err: any) {
-      setMessage(err?.message ?? "Unexpected error");
+
+      router.replace(redirectPath);
+    } catch {
+      setMessage("Unexpected error during login.");
     } finally {
       setLoading(false);
     }

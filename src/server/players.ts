@@ -1,153 +1,179 @@
-import { Player } from '@/types/player';
-import { supabase } from '@/lib/supabase/client';
+﻿import { supabase } from "@/lib/supabase/client";
+import { Player } from "@/types/player";
+import { derivePlayers, PlayerRow, sortByStandings } from "./tournament";
+import { MatchRecord } from "@/types/game";
 
-export async function getPlayers() {
-	const { data, error } = await supabase
-		.from('players')
-		.select('*')
-		.order('wins', { ascending: false })
-		.order('games', { ascending: false });
-	if (error) {
-		throw error;
-	}
-	return data;
+async function fetchAllPlayersRows(): Promise<PlayerRow[]> {
+  const { data, error } = await supabase.from("players").select("*");
+
+  if (error) {
+    throw error;
+  }
+
+  return (data || []) as PlayerRow[];
 }
 
-export async function addPlayer(name: string, rating: number = 1200) {
-	const { data, error } = await supabase.from('players').insert([{ name, rating }]);
-	if (error) {
-		throw error;
-	}
-	return data;
+async function fetchAllMatchesRows(): Promise<MatchRecord[]> {
+  const { data, error } = await supabase.from("matches").select("*");
+
+  if (error) {
+    throw error;
+  }
+
+  return (data || []) as MatchRecord[];
+}
+
+export async function getPlayers(): Promise<Player[]> {
+  const [playersRows, matchesRows] = await Promise.all([
+    fetchAllPlayersRows(),
+    fetchAllMatchesRows(),
+  ]);
+
+  return sortByStandings(derivePlayers(playersRows, matchesRows));
+}
+
+export async function addPlayer(name: string, rating = 1200) {
+  const fullName = name.trim();
+  if (!fullName) {
+    throw new Error("Full name is required");
+  }
+
+  const normalizedElo = Number.isFinite(rating) ? Math.max(0, Math.floor(rating)) : 1200;
+
+  const { data, error } = await supabase
+    .from("players")
+    .insert([{ full_name: fullName, elo: normalizedElo }])
+    .select();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
 }
 
 export async function deletePlayer(id: number) {
-	const { data, error } = await supabase.from('players').update({ is_active: false }).eq('id', id);
-	if (error) {
-		throw error;
-	}
-	return data;
+  const { data, error } = await supabase
+    .from("players")
+    .update({ is_active: false })
+    .eq("id", id)
+    .select();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
 }
 
 export async function restorePlayer(id: number) {
-	const { data, error } = await supabase.from('players').update({ is_active: true }).eq('id', id);
-	if (error) {
-		throw error;
-	}
-	return data;
+  const { data, error } = await supabase
+    .from("players")
+    .update({ is_active: true })
+    .eq("id", id)
+    .select();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
 }
 
 export async function markAbsent(id: number) {
-	const { data, error } = await supabase.from('players').update({ is_present: false }).eq('id', id);
-	if (error) {
-		throw error;
-	}
-	return data;
+  const { data, error } = await supabase
+    .from("players")
+    .update({ is_present: false })
+    .eq("id", id)
+    .select();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
 }
 
 export async function markPresent(id: number) {
-	const { data, error } = await supabase.from('players').update({ is_present: true }).eq('id', id);
-	if (error) {
-		throw error;
-	}
-	return data;
-}
+  const { data, error } = await supabase
+    .from("players")
+    .update({ is_present: true })
+    .eq("id", id)
+    .select();
 
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
 
 export async function editPlayer(data: Player) {
-	const { data: updatedData, error } = await supabase.from('players').update(data).eq('id', data.id);
-	if (error) {
-		throw error;
-	}
-	return updatedData;
+  const fullName = data.full_name?.trim() || data.name?.trim();
+  const elo = Number.isFinite(data.elo) ? data.elo : data.rating;
+
+  const { data: updatedData, error } = await supabase
+    .from("players")
+    .update({
+      ...(fullName ? { full_name: fullName } : {}),
+      ...(Number.isFinite(elo) ? { elo } : {}),
+      is_active: data.is_active,
+      is_present: data.is_present,
+    })
+    .eq("id", data.id)
+    .select();
+
+  if (error) {
+    throw error;
+  }
+
+  return updatedData;
 }
 
-export async function getPlayerById(id: number) {
-	const { data, error } = await supabase.from('players').select('*').eq('id', id).single();
-	if (error) {
-		throw error;
-	}
-	return data;
+export async function getPlayerById(id: number): Promise<Player> {
+  const [players, matches] = await Promise.all([fetchAllPlayersRows(), fetchAllMatchesRows()]);
+  const derived = derivePlayers(players, matches).find((player) => player.id === id);
+
+  if (!derived) {
+    throw new Error("Player not found");
+  }
+
+  return derived;
 }
 
-export async function calculateScore(id: number) {
-	const { data, error } = await supabase.from('players').select('wins, draws, byes').eq('id', id).single();
-	
-    if (error) {
-		throw error;
-	}
-
-	const result = (data.wins || 0) + (data.byes || 0) + (data.draws || 0) * 0.5;
-
-	return result;
+export async function calculateScore(id: number): Promise<number> {
+  const player = await getPlayerById(id);
+  return player.score;
 }
 
-export async function calculateBuchholzScores(id: number) {
-	const { data, error } = await supabase.from('players').select('opponents').eq('id', id).single();
-
-    if (error) {
-		throw error;
-	}
-
-    if (!data.opponents || data.opponents.length === 0) {
-        return 0;
-    }
-
-    // Fetch all opponents' stats in one query instead of looping
-    const { data: opponentsData, error: oppError } = await supabase
-        .from('players')
-        .select('wins, draws, byes')
-        .in('id', data.opponents);
-
-    if (oppError) {
-        throw oppError;
-    }
-
-    // Calculate sum of opponents' scores
-    const result = opponentsData.reduce((acc, curr) => {
-        const score = (curr.wins || 0) + (curr.byes || 0) + (curr.draws || 0) * 0.5;
-        return acc + score;
-    }, 0);
-
-	return result;
+export async function calculateBuchholzScores(id: number): Promise<number> {
+  const player = await getPlayerById(id);
+  return player.buchholz;
 }
 
-export async function updatePlayerStreaks(updates: { playerId: number, newStreak: number }[]) {
-    // Perform updates in parallel
-    const promises = updates.map(({ playerId, newStreak }) => 
-        supabase
-            .from('players')
-            .update({ olor: newStreak })
-            .eq('id', playerId)
-    );
-
-    const results = await Promise.all(promises);
-    
-    // Check for errors
-    const errors = results.filter(r => r.error).map(r => r.error);
-    if (errors.length > 0) {
-        console.error('Errors updating player streaks:', errors);
-        throw new Error('Failed to update some player streaks');
-    }
+export async function updatePlayerStreaks(): Promise<void> {
+  // No-op in the new schema. Color streak is derived from match history.
 }
 
 export async function resetAllPlayers() {
+  const { error: deleteMatchesError } = await supabase
+    .from("matches")
+    .delete()
+    .gt("id", 0);
 
-	// # apply to all
-	const { data, error } = await supabase.from('players').update({
-		wins: 0,
-		losses: 0,
-		draws: 0,
-		byes: 0,
-		games: 0,
-		opponents: [],
-		color: 0,
-		is_active: true,
-	})
-	.neq('id', 0); 
-	
-	if (error) {
-		throw error;
-	}
-	return data;
+  if (deleteMatchesError) {
+    throw deleteMatchesError;
+  }
+
+  const { data, error } = await supabase
+    .from("players")
+    .update({ is_active: true, is_present: true })
+    .gt("id", 0)
+    .select();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
 }

@@ -1,4 +1,6 @@
-import { supabase } from '@/lib/supabase/client';
+﻿import { supabase } from "@/lib/supabase/client";
+import { isPendingMatch } from "./tournament";
+import { MatchRecord } from "@/types/game";
 
 export interface StatsGridProps {
   stats: {
@@ -10,18 +12,27 @@ export interface StatsGridProps {
 }
 
 export async function getStats() {
+  const [playersResult, matchesResult] = await Promise.all([
+    supabase.from("players").select("id", { count: "exact" }).eq("is_active", true),
+    supabase.from("matches").select("*"),
+  ]);
 
-    const { data: playersData, error: playersDrror } = await supabase.from('players').select('*').neq('is_active', false);
-	const { data: gamesData, error: gamesRrror } = await supabase.from('games').select('*');
+  if (playersResult.error) {
+    throw playersResult.error;
+  }
 
-  // console.log(playersData, gamesData);
+  if (matchesResult.error) {
+    throw matchesResult.error;
+  }
 
-    const result = {
-        totalPlayers: playersData?.length,
-        totalGames: gamesData?.length,
-        totalRounds: (gamesData && gamesData.length > 0) ? Math.max(...gamesData.map((g) => g.round)) : 0,
-        gamesPlayed: gamesData ? gamesData.filter((g) => g.result !== null).length : 0,
-    }
+  const matches = (matchesResult.data || []) as MatchRecord[];
+  const totalRounds = matches.length > 0 ? Math.max(...matches.map((m) => m.round_number)) : 0;
+  const gamesPlayed = matches.filter((m) => !isPendingMatch(m)).length;
 
-    return result;
+  return {
+    totalPlayers: playersResult.count ?? 0,
+    totalGames: matches.length,
+    totalRounds,
+    gamesPlayed,
+  };
 }

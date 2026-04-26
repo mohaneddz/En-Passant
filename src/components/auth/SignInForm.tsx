@@ -1,11 +1,9 @@
-"use client";
+﻿"use client";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { useSignInLogic } from "@/hooks/useSignInLogic";
-
-import Link from "next/link";
 import Image from "next/image";
 
 export default function SignInForm() {
@@ -28,15 +26,10 @@ export default function SignInForm() {
           <Image src="/assets/logo.png" alt="Logo" width={64} height={64} />
         </div>
         <h1 className="text-3xl font-bold mb-2">Admin Portal</h1>
-        <p className="text-gray-400 text-sm">
-          Sign in to manage the tournament
-        </p>
+        <p className="text-gray-400 text-sm">Sign in with your admin email</p>
       </div>
 
-      <form
-        onSubmit={handleSignIn}
-        className="flex flex-col gap-5 w-full"
-      >
+      <form onSubmit={handleSignIn} className="flex flex-col gap-5 w-full">
         <div className="flex flex-col gap-2">
           <label className="text-sm font-bold">Email</label>
           <div className="relative">
@@ -53,7 +46,7 @@ export default function SignInForm() {
         </div>
 
         <div className="flex flex-col gap-2">
-          <label className="text-sm font-bold">Password</label>
+          <label className="text-sm font-bold">Shared Password</label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 h-5 w-5" />
             <Input
@@ -61,7 +54,7 @@ export default function SignInForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              placeholder="••••••"
+              placeholder="••••••••"
               className="pl-12 pr-10 bg-[#2A2A2A] border-none text-gray-200 placeholder:text-gray-600 h-12 focus-visible:ring-1 focus-visible:ring-[#C5A059]"
             />
             <button
@@ -78,8 +71,6 @@ export default function SignInForm() {
           </div>
         </div>
 
-        <p className="text-center opacity-50">No account yet? <Link href="/signup" className="text-[#EBCB6B] hover:underline">Sign Up</Link></p>
-
         <Button
           type="submit"
           disabled={loading}
@@ -89,15 +80,7 @@ export default function SignInForm() {
         </Button>
 
         {message && (
-          <div
-            className={`text-sm text-center mt-2 ${
-              message.includes("success") || message.includes("Logged")
-                ? "text-green-500"
-                : "text-red-500"
-            }`}
-          >
-            {message}
-          </div>
+          <div className="text-sm text-center mt-2 text-red-500">{message}</div>
         )}
       </form>
     </div>

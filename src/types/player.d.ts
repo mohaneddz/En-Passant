@@ -1,20 +1,24 @@
-export interface Player {
-  id: number;               // Primary key
-  name: string;             // Not null
-  rating: number;   // Nullable
-  wins: number;     // smallint
-  losses: number;   // smallint
-  draws: number;    // smallint
-  games: number;    // smallint
-  opponents: number[]; // Array of opponent IDs
-  color: number;    // smallint (e.g., color balance)
-  olor: number; // Signed streak counter (+1, +2, -1, -2)
-  byes: number;     // smallint
-  is_active: boolean; // Active status
-  is_present: boolean; // Present status
+﻿export interface Player {
+  id: number;
+  full_name: string;
+  elo: number;
+  is_active: boolean;
+  is_present: boolean;
+  created_at?: string;
 
-  // Computed properties
-  score?: number;
+  // Backward-compatible aliases for existing UI code
+  name: string;
+  rating: number;
+
+  // Derived tournament stats
+  wins: number;
+  losses: number;
+  draws: number;
+  games: number;
+  byes: number;
+  score: number;
+  buchholz: number;
+  opponents: number[];
+  color: number;
   rank?: number;
-  buchholz?: number;
-};
+}

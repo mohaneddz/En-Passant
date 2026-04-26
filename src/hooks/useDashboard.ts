@@ -1,273 +1,229 @@
-import { useState, useEffect, useRef } from 'react';
-import { getPlayers, addPlayer, deletePlayer, editPlayer, restorePlayer,resetAllPlayers, markAbsent, markPresent, getPlayerById } from '@/server/players';
-import { getStats, StatsGridProps } from '@/server/stats';
-import { generateScheduledRound, startScheduledRound, removeLastRound } from '@/server/games';
-import { addGame } from '@/server/games';
-import { GamesListRef } from '@/components/dashboard/GamesList';
-import { supabase } from '@/lib/supabase/client';
-
-import { Player } from '@/types/player';
+﻿import { useEffect, useRef, useState } from "react";
+import {
+  addPlayer,
+  deletePlayer,
+  getPlayerById,
+  getPlayers,
+  markAbsent,
+  markPresent,
+  resetAllPlayers,
+  restorePlayer,
+} from "@/server/players";
+import { getStats, StatsGridProps } from "@/server/stats";
+import {
+  addGame,
+  generateScheduledRound,
+  getGames,
+  removeLastRound,
+  startScheduledRound,
+} from "@/server/games";
+import { GamesListRef } from "@/components/dashboard/GamesList";
+import { Player } from "@/types/player";
 
 export const useDashboard = () => {
-	const [activeTab, setActiveTab] = useState('players');
-	const [players, setPlayers] = useState<Player[]>([]);
-	const [loading, setLoading] = useState(true);
-	const [showGenerateDialog, setShowGenerateDialog] = useState(false);
-	const [showStartDialog, setShowStartDialog] = useState(false);
-	const [showRemoveDialog, setShowRemoveDialog] = useState(false);
-	const [hasPendingRound, setHasPendingRound] = useState(false);
-	const gamesListRef = useRef<GamesListRef>(null);
+  const [activeTab, setActiveTab] = useState("players");
+  const [players, setPlayers] = useState<Player[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showGenerateDialog, setShowGenerateDialog] = useState(false);
+  const [showStartDialog, setShowStartDialog] = useState(false);
+  const [showRemoveDialog, setShowRemoveDialog] = useState(false);
+  const [hasPendingRound, setHasPendingRound] = useState(false);
+  const gamesListRef = useRef<GamesListRef>(null);
 
-	const handleRestorePlayer = async (id: number) => {
-		try {
-			await restorePlayer(id);
-			await fetchPlayers();
-		} catch (error) {
-			console.error('Error restoring player:', error);
-		}
-	};
+  const [stats, setStats] = useState<StatsGridProps["stats"]>({
+    totalPlayers: null,
+    totalRounds: null,
+    gamesPlayed: null,
+    totalGames: null,
+  });
 
-	const handleResetAllPlayers = async () => {
-		try {
-			await resetAllPlayers();
-			await fetchPlayers();
-		} catch (error) {
-			console.error('Error resetting players:', error);
-		}
-	}
+  const fetchStats = async () => {
+    try {
+      const data = await getStats();
+      setStats(data);
+    } catch (error) {
+      console.error("Error fetching stats:", error);
+    }
+  };
 
-	const handleAbsentPlayer = async (id: number) => {
-		// # if the user is present, mark them absent; if absent, mark present
-		try {
-			const player = await getPlayerById(id);
-			if (player.is_present) {
-				console.log('Marking player absent:', id);
-				await markAbsent(id);
-			} else {
-				console.log('Marking player present:', id);
-				await markPresent(id);
-			}
-			await fetchPlayers();
-		}
-		catch (error) {
-			console.error('Error toggling player presence:', error);
-		}
-	};
+  const fetchRounds = async () => {
+    try {
+      const games = await getGames();
+      if (games.length === 0) {
+        setHasPendingRound(false);
+        return;
+      }
 
+      const lastRound = Math.max(...games.map((game) => game.round));
+      const lastRoundGames = games.filter((game) => game.round === lastRound);
+      const nonByeGames = lastRoundGames.filter((game) => game.presence === 2);
 
-	const [stats, setStats] = useState<StatsGridProps['stats']>({
-		totalPlayers: null,
-		totalRounds: null,
-		gamesPlayed: null,
-		totalGames: null,
-	});
+      const allPending =
+        nonByeGames.length > 0 &&
+        nonByeGames.every((game) => game.status === "PENDING");
 
-	const fetchStats = async () => {
-		try {
-			const data = await getStats();
-			// @ts-ignore - ignoring potential null/undefined mismatches from direct DB return
-			setStats(data);
-		} catch (error) {
-			console.error('Error fetching stats:', error);
-		}
-	};
+      setHasPendingRound(allPending);
+    } catch (error) {
+      console.error("Error fetching rounds:", error);
+      setHasPendingRound(false);
+    }
+  };
 
-	const fetchRounds = async () => {
-		// Check if there's a pending round
-		try {
-			const { data: games } = await supabase
-				.from('games')
-				.select('status, round')
-				.order('round', { ascending: false })
-				.limit(10);
-			
-			if (games && games.length > 0) {
-				const lastRoundGames = games.filter(g => g.round === games[0].round);
-				const allPending = lastRoundGames.every(g => g.status === 'PENDING');
-				setHasPendingRound(allPending && lastRoundGames.length > 0);
-			} else {
-				setHasPendingRound(false);
-			}
-		} catch (error) {
-			console.error('Error fetching rounds:', error);
-			setHasPendingRound(false);
-		}
-	};
+  const fetchPlayers = async () => {
+    try {
+      const data = await getPlayers();
+      setPlayers(data);
+    } catch (error) {
+      console.error("Error fetching players:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-	const fetchPlayers = async () => {
-		try {
-			const data = await getPlayers();
-			setPlayers(data as unknown as Player[]);
-		} catch (error) {
-			console.error('Error fetching players:', error);
-		} finally {
-			setLoading(false);
-		}
-	};
+  useEffect(() => {
+    fetchPlayers();
+    fetchStats();
+    fetchRounds();
+  }, []);
 
-	useEffect(() => {
-		fetchPlayers();
-		fetchStats();
-		fetchRounds();
-	}, []);
+  const handleRestorePlayer = async (id: number) => {
+    await restorePlayer(id);
+    await fetchPlayers();
+  };
 
-	const handleGenerateRound = async () => {
-		try {
-			setLoading(true);
-			const result = await generateScheduledRound();
-			if (result.success) {
-				await fetchStats();
-				await fetchRounds();
-				await fetchPlayers();
-				setShowGenerateDialog(false);
-			} else {
-				console.error('Error generating round:', result.error);
-				alert(`Failed to generate round: ${result.error}`);
-			}
-		} catch (error) {
-			console.error('Error generating round:', error);
-			alert('Failed to generate round');
-		} finally {
-			setLoading(false);
-		}
-	};
+  const handleResetAllPlayers = async () => {
+    await resetAllPlayers();
+    await fetchPlayers();
+    await fetchStats();
+    await fetchRounds();
+  };
 
-	const handleStartRound = async () => {
-		try {
-			setLoading(true);
-			const result = await startScheduledRound();
-			if (result.success) {
-				await fetchStats();
-				await fetchRounds();
-				await fetchPlayers();
-				setShowStartDialog(false);
-			} else {
-				console.error('Error starting round:', result.error);
-				alert(`Failed to start round: ${result.error}`);
-			}
-		} catch (error) {
-			console.error('Error starting round:', error);
-			alert('Failed to start round');
-		} finally {
-			setLoading(false);
-		}
-	};
+  const handleAbsentPlayer = async (id: number) => {
+    const player = await getPlayerById(id);
+    if (player.is_present) {
+      await markAbsent(id);
+    } else {
+      await markPresent(id);
+    }
+    await fetchPlayers();
+  };
 
-	const handleRemoveLastRound = async () => {
-		try {
-			setLoading(true);
-			const result = await removeLastRound();
-			if (result.success) {
-				await fetchStats();
-				await fetchRounds();
-				await fetchPlayers();
-				setShowRemoveDialog(false);
-			} else {
-				console.error('Error removing round:', result.error);
-				alert(`Failed to remove round: ${result.error}`);
-			}
-		} catch (error) {
-			console.error('Error removing round:', error);
-			alert('Failed to remove round');
-		} finally {
-			setLoading(false);
-		}
-	};
+  const handleGenerateRound = async () => {
+    setLoading(true);
+    try {
+      const result = await generateScheduledRound();
+      if (!result.success) {
+        throw new Error(String(result.error ?? "Failed to generate round"));
+      }
+      setShowGenerateDialog(false);
+      await Promise.all([fetchPlayers(), fetchStats(), fetchRounds()]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-	const isNextPhaseDisabled = false;
+  const handleStartRound = async () => {
+    setLoading(true);
+    try {
+      const result = await startScheduledRound();
+      if (!result.success) {
+        throw new Error(String(result.error ?? "Failed to start round"));
+      }
+      setShowStartDialog(false);
+      await Promise.all([fetchPlayers(), fetchStats(), fetchRounds()]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-	const handleAddPlayer = async (newPlayer: { name: string, rating: number }) => {
-		try {
-			await addPlayer(newPlayer.name, newPlayer.rating);
-			await fetchPlayers();
-		} catch (error) {
-			console.error('Error adding player:', error);
-		}
-	};
+  const handleRemoveLastRound = async () => {
+    setLoading(true);
+    try {
+      const result = await removeLastRound();
+      if (!result.success) {
+        throw new Error(String(result.error ?? "Failed to remove round"));
+      }
+      setShowRemoveDialog(false);
+      await Promise.all([fetchPlayers(), fetchStats(), fetchRounds()]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-	const handleAddGame = async (game: { whiteId: number; blackId: number; result?: string }) => {
-		try {
-			await addGame(game.whiteId, game.blackId, game.result);
-			await fetchPlayers();
-			await fetchStats();
-		} catch (error) {
-			console.error('Error adding game:', error);
-		}
-	};
+  const handleAddPlayer = async (newPlayer: { name: string; rating: number }) => {
+    await addPlayer(newPlayer.name, newPlayer.rating);
+    await Promise.all([fetchPlayers(), fetchStats()]);
+  };
 
-	const handleDeletePlayer = async (id: number) => {
-		try {
-			await deletePlayer(id);
-			await fetchPlayers();
-		} catch (error) {
-			console.error('Error deleting player:', error);
-		}
-	};
+  const handleImportPlayers = async (file: File) => {
+    const formData = new FormData();
+    formData.set("file", file);
 
-	const handleNextPhase = async () => {
-		try {
-			setLoading(true);
-			const result = await generateScheduledRound();
-			if (result.success) {
-				await fetchStats();
-				await fetchRounds();
-				await fetchPlayers();
-				setShowGenerateDialog(false);
-			} else {
-				console.error('Error starting next phase:', result.error);
-			}
-		} catch (error) {
-			console.error('Error starting next phase:', error);
-		} finally {
-			setLoading(false);
-		}
-	};
+    const response = await fetch("/api/users/import", {
+      method: "POST",
+      body: formData,
+    });
 
-	// const handleUndoPhase = async () => {
-	// 	try {
-	// 		setLoading(true);
-	// 		const result = await undoLastRound();
-	// 		if (result.success) {
-	// 			await fetchStats();
-	// 			await fetchRounds();
-	// 			await fetchPlayers();
-	// 			setShowUndoDialog(false);
-	// 		} else {
-	// 			console.error('Error undoing phase:', result.error);
-	// 		}
-	// 	} catch (error) {
-	// 		console.error('Error undoing phase:', error);
-	// 	} finally {
-	// 		setLoading(false);
-	// 	}
-	// };
+    const payload = (await response.json().catch(() => ({}))) as {
+      inserted?: number;
+      skipped_duplicate?: number;
+      invalid_rows?: number;
+      error?: string;
+    };
 
-	return {
-		activeTab,
-		setActiveTab,
-		players,
-		loading,
-		showGenerateDialog,
-		setShowGenerateDialog,
-		showStartDialog,
-		setShowStartDialog,
-		showRemoveDialog,
-		setShowRemoveDialog,
-		hasPendingRound,
-		gamesListRef,
-		stats,
-		handleAddPlayer,
-		handleAddGame,
-		handleDeletePlayer,
-		handleGenerateRound,
-		handleStartRound,
-		handleRemoveLastRound,
-		handleNextPhase,
-		fetchPlayers,
-		fetchStats,
-		fetchRounds,
-		handleRestorePlayer,
-		handleResetAllPlayers,
-		handleAbsentPlayer
-	};
+    if (!response.ok) {
+      throw new Error(payload.error || "Failed to import users.");
+    }
+
+    await Promise.all([fetchPlayers(), fetchStats()]);
+
+    return {
+      inserted: payload.inserted ?? 0,
+      skipped_duplicate: payload.skipped_duplicate ?? 0,
+      invalid_rows: payload.invalid_rows ?? 0,
+    };
+  };
+
+  const handleAddGame = async (game: {
+    whiteId: number;
+    blackId: number;
+    result?: string;
+  }) => {
+    await addGame(game.whiteId, game.blackId, game.result);
+    await Promise.all([fetchPlayers(), fetchStats(), fetchRounds()]);
+  };
+
+  const handleDeletePlayer = async (id: number) => {
+    await deletePlayer(id);
+    await fetchPlayers();
+  };
+
+  return {
+    activeTab,
+    setActiveTab,
+    players,
+    loading,
+    showGenerateDialog,
+    setShowGenerateDialog,
+    showStartDialog,
+    setShowStartDialog,
+    showRemoveDialog,
+    setShowRemoveDialog,
+    hasPendingRound,
+    gamesListRef,
+    stats,
+    handleAddPlayer,
+    handleImportPlayers,
+    handleAddGame,
+    handleDeletePlayer,
+    handleGenerateRound,
+    handleStartRound,
+    handleRemoveLastRound,
+    fetchPlayers,
+    fetchStats,
+    fetchRounds,
+    handleRestorePlayer,
+    handleResetAllPlayers,
+    handleAbsentPlayer,
+  };
 };
