@@ -32,7 +32,7 @@ export default function GamesTabs({ allRounds }: { allRounds: Round[] }) {
     // Initialize active tab
     const [activeTab, setActiveTab] = useState(() => {
         if (visibleRounds.length === 0) return "";
-        return visibleRounds.find(r => r.status === 'In progress')?.id || visibleRounds[0].id;
+        return visibleRounds.find(r => r.status === 'In progress')?.id || visibleRounds[0]?.id || "";
     });
 
     // Update active tab when page changes if current active tab is no longer visible
@@ -67,26 +67,29 @@ export default function GamesTabs({ allRounds }: { allRounds: Round[] }) {
     };
 
     if (allRounds.length === 0) {
-        return <div className="text-center text-gray-400">No games so far :D</div>;
+        return <div className="text-center text-cyan-500/50 font-bold py-20">No games scheduled yet.</div>;
     }
 
     return (
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <div className="flex items-center gap-2 mb-8">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full animate-fade-in-up">
+            <div className="flex items-center gap-3 mb-10">
                 <button
                     onClick={handlePrev}
                     disabled={!hasPrev}
-                    className="p-2 rounded-lg bg-[#1A1A1A] text-white disabled:opacity-30 hover:bg-[#2A2A2A] transition-colors"
+                    className="p-3 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 disabled:opacity-30 hover:bg-cyan-500/20 hover:text-white transition-all duration-300"
                 >
                     <ChevronLeft className="w-6 h-6" />
                 </button>
 
-                <TabsList className={`flex-1 bg-[#1A1A1A] p-1 h-auto rounded-lg grid ${getGridColsClass(visibleRounds.length)}`}>
+                <TabsList className={`flex-1 bg-[#050d1e]/80 border border-cyan-500/20 p-1.5 h-auto rounded-xl grid ${getGridColsClass(visibleRounds.length)} backdrop-blur-md`}>
                     {visibleRounds.map((round) => (
                         <TabsTrigger
                             key={round.id}
                             value={round.id}
-                            className="py-3 text-base rounded-md transition-all data-[state=active]:text-black data-[state=active]:bg-[#FCD34D]"
+                            className="py-3.5 text-sm font-bold tracking-widest uppercase rounded-lg transition-all 
+                                      data-[state=active]:text-[#050d1e] data-[state=active]:bg-[#00e5ff] 
+                                      data-[state=active]:shadow-[0_0_20px_rgba(0,229,255,0.4)]
+                                      text-cyan-500/60 hover:text-cyan-300"
                         >
                             {round.label}
                         </TabsTrigger>
@@ -96,20 +99,23 @@ export default function GamesTabs({ allRounds }: { allRounds: Round[] }) {
                 <button
                     onClick={handleNext}
                     disabled={!hasNext}
-                    className="p-2 rounded-lg bg-[#1A1A1A] text-white disabled:opacity-30 hover:bg-[#2A2A2A] transition-colors"
+                    className="p-3 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 disabled:opacity-30 hover:bg-cyan-500/20 hover:text-white transition-all duration-300"
                 >
                     <ChevronRight className="w-6 h-6" />
                 </button>
             </div>
 
             {visibleRounds.map((round) => (
-                <TabsContent key={round.id} value={round.id} className="space-y-6">
-                    <div className="flex items-center gap-2 text-gray-400 mb-6">
-                        <Swords className="w-5 h-5 text-[#FCD34D]" />
-                        <span className="font-bold text-white">{round.label}</span>
+                <TabsContent key={round.id} value={round.id} className="space-y-8 outline-none">
+                    <div className="flex items-center gap-3 mb-8">
+                        <div className="p-2 rounded-lg bg-cyan-500/10 border border-cyan-500/20">
+                            <Swords className="w-5 h-5 text-[#00e5ff]" />
+                        </div>
+                        <span className="font-black text-2xl tracking-tighter uppercase text-white">{round.label}</span>
+                        <div className="flex-1 h-px bg-gradient-to-r from-cyan-500/40 to-transparent" />
                     </div>
 
-                    <div className="space-y-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-1 gap-4">
                         {round.games.map((game: Game, index: number) => (
                             <GameCard
                                 key={index}

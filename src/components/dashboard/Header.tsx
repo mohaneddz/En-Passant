@@ -1,8 +1,9 @@
-﻿"use client";
+"use client";
 
 import React from "react";
 import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
+import Image from "next/image";
 
 const Header = () => {
   const router = useRouter();
@@ -13,32 +14,26 @@ const Header = () => {
   };
 
   return (
-    <header className="bg-[#1a1a1a] border-b border-[#333] px-8 py-5">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-[#071034]/70 backdrop-blur-xl border-b border-cyan-500/20 px-8 py-4">
       <div className="flex items-center justify-between max-w-7xl mx-auto">
         <div className="flex items-center gap-4">
-          <div className="w-10 h-10 bg-white/5 rounded-lg flex items-center justify-center border border-white/10">
-            <svg
-              viewBox="0 0 24 24"
-              className="w-6 h-6 text-white"
-              fill="currentColor"
-            >
-              <path d="M19 22H5c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h14c1.1 0 2 .9 2 2v16c0 1.1-.9 2-2 2zM12 4l-1.5 5.5h-4L10 13l-1.5 5L12 15l3.5 3-1.5-5 3.5-3.5h-4L12 4z" />
-            </svg>
+          <div className="w-12 h-12 bg-cyan-500/10 rounded-xl flex items-center justify-center border border-cyan-500/20 shadow-inner">
+             <Image src="/images/brand/esc.webp" alt="ESCC" width={32} height={32} className="drop-shadow-[0_0_8px_rgba(0,229,255,0.5)]" />
           </div>
           <div>
-            <h1 className="text-white text-lg font-bold tracking-tight">
-              Admin dashboard
+            <h1 className="text-white text-xl font-black  uppercase" style={{ fontFamily: "var(--font-heading)" }}>
+              Admin Arena
             </h1>
-            <p className="text-gray-500 text-xs font-medium uppercase tracking-wider">
-              EN PASSANT Chess Tournament
+            <p className="text-cyan-500/40 text-[10px] font-black uppercase tracking-[0.2em]">
+              Olympole Chess Control 2026
             </p>
           </div>
         </div>
         <button
           onClick={handleLogout}
-          className="flex items-center gap-2 px-4 py-2 bg-[#262626] hover:bg-[#333] text-white text-sm font-medium rounded-lg transition-all border border-[#333]"
+          className="flex items-center gap-2 px-5 py-2.5 bg-cyan-500/10 hover:bg-cyan-500/20 text-[#00e5ff] text-xs font-black tracking-widest uppercase rounded-xl transition-all border border-cyan-500/20 hover:border-cyan-500/40"
         >
-          <LogOut size={16} />
+          <LogOut size={16} strokeWidth={3} />
           <span>Logout</span>
         </button>
       </div>

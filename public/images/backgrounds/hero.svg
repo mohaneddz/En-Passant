@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080">
+  <defs>
+    <radialGradient id="bg1" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#0a1a5c"/>
+      <stop offset="100%" stop-color="#000818"/>
+    </radialGradient>
+    <radialGradient id="glow1" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#00e5ff" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#00e5ff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glow2" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#9b00ff" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#9b00ff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- Deep space background -->
+  <rect width="1920" height="1080" fill="url(#bg1)"/>
+  <!-- Center neon glow arena effect -->
+  <ellipse cx="960" cy="500" rx="700" ry="350" fill="url(#glow1)"/>
+  <ellipse cx="400" cy="300" rx="300" ry="200" fill="url(#glow2)"/>
+  <ellipse cx="1500" cy="700" rx="300" ry="180" fill="url(#glow2)"/>
+  <!-- Stadium floor lines -->
+  <line x1="200" y1="700" x2="1720" y2="700" stroke="#00e5ff" stroke-opacity="0.08" stroke-width="1"/>
+  <line x1="100" y1="750" x2="1820" y2="750" stroke="#00e5ff" stroke-opacity="0.05" stroke-width="1"/>
+  <!-- Chess board grid hint -->
+  <rect x="760" y="580" width="400" height="400" fill="none" stroke="#00e5ff" stroke-opacity="0.06" stroke-width="1"/>
+  <!-- Neon cyan circle decoration -->
+  <circle cx="200" cy="300" r="80" fill="none" stroke="#00e5ff" stroke-opacity="0.15" stroke-width="2"/>
+  <circle cx="1720" cy="280" r="60" fill="none" stroke="#9b00ff" stroke-opacity="0.2" stroke-width="2"/>
+  <!-- Stars/particles -->
+  <circle cx="300" cy="150" r="1.5" fill="white" opacity="0.4"/>
+  <circle cx="800" cy="100" r="1" fill="white" opacity="0.3"/>
+  <circle cx="1400" cy="200" r="1.5" fill="#00e5ff" opacity="0.5"/>
+  <circle cx="1600" cy="100" r="1" fill="white" opacity="0.3"/>
+  <circle cx="500" cy="400" r="1" fill="#9b00ff" opacity="0.4"/>
+</svg>

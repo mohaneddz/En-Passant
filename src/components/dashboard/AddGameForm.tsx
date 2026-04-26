@@ -27,7 +27,7 @@ const FormSelect: React.FC<FormSelectProps> = ({ label, value, onChange, options
     <select
       value={value}
       onChange={onChange}
-      className="w-full bg-[#111] border border-[#333] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#fbbf24] focus:ring-1 focus:ring-[#fbbf24] transition-all text-sm"
+      className="w-full bg-cyan-900/10 border border-cyan-500/10 rounded-xl px-5 py-4 text-white placeholder-cyan-900 focus:outline-none focus:border-cyan-500/40 focus:bg-cyan-900/20 transition-all text-sm font-bold appearance-none cursor-pointer"
     >
       <option value="" className="text-gray-600">{placeholder || 'Select an option'}</option>
       {options.map((opt) => (
@@ -90,43 +90,43 @@ const AddGameForm: React.FC<AddGameFormProps> = ({ players, onAddGame }) => {
   };
 
   return (
-    <div className="bg-[#1a1a1a] border border-[#333] rounded-xl p-8 mb-8">
-      <h2 className="text-white text-lg font-bold mb-6 flex items-center gap-2">
-        Add New Game
+    <div className="bg-[#071034]/60 backdrop-blur-xl border border-cyan-500/20 rounded-2xl p-8 mb-8 shadow-2xl">
+      <h2 className="text-white text-xl font-black tracking-tighter uppercase mb-6 flex items-center gap-2" style={{ fontFamily: "var(--font-heading)" }}>
+        Authorize Match
       </h2>
       {error && (
-        <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
+        <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-xs font-black uppercase tracking-widest">
           {error}
         </div>
       )}
       <div className="space-y-1">
         <FormSelect
-          label="White Player"
+          label="Arena White"
           value={formData.whiteId}
           onChange={(e) => setFormData({ ...formData, whiteId: e.target.value })}
           options={playerOptions}
-          placeholder="Select white player"
+          placeholder="CHOOSE WHITE PLAYER"
         />
         <FormSelect
-          label="Black Player"
+          label="Arena Black"
           value={formData.blackId}
           onChange={(e) => setFormData({ ...formData, blackId: e.target.value })}
           options={playerOptions}
-          placeholder="Select black player"
+          placeholder="CHOOSE BLACK PLAYER"
         />
         <FormSelect
-          label="Result (Optional)"
+          label="Manual Result (OPTIONAL)"
           value={formData.result}
           onChange={(e) => setFormData({ ...formData, result: e.target.value })}
           options={resultOptions}
-          placeholder="Leave empty for pending game"
+          placeholder="LEAVE FOR LIVE UPDATES"
         />
         <button
           onClick={handleSubmit}
-          className="mt-6 flex items-center justify-center gap-2 bg-[#fbbf24] hover:bg-[#f59e0b] text-black font-bold px-6 py-3 rounded-lg transition-all w-full sm:w-auto"
+          className="mt-8 flex items-center justify-center gap-3 bg-[#00e5ff] hover:bg-cyan-400 text-[#050d1e] font-black tracking-widest uppercase px-8 py-4 rounded-xl transition-all w-full sm:w-auto shadow-[0_0_20px_rgba(0,229,255,0.4)] active:scale-95"
         >
-          <Plus size={18} />
-          <span>Add Game</span>
+          <Plus size={18} strokeWidth={3} />
+          <span>Authorize Match</span>
         </button>
       </div>
     </div>

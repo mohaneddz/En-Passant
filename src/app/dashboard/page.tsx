@@ -1,6 +1,7 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 
 import { useDashboard } from "@/hooks/useDashboard";
 
@@ -15,6 +16,10 @@ import GamesList from "@/components/dashboard/GamesList";
 import { getGames } from "@/server/games";
 
 import SimpleDialog from "@/components/SimpleDialog";
+
+function Skeleton({ className = "" }: { className?: string }) {
+    return <div className={`animate-pulse rounded-xl bg-cyan-900/10 border border-cyan-500/10 ${className}`} />;
+}
 
 export default function ChessDashboard() {
   const {
@@ -67,25 +72,38 @@ export default function ChessDashboard() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#111]">
+    <div className="relative min-h-screen font-sans">
+        {/* Background */}
+        <div className="fixed inset-0 -z-10">
+            <Image
+                src="/images/backgrounds/background.svg"
+                alt="Background"
+                fill
+                priority
+                className="object-cover object-center"
+            />
+            <div className="absolute inset-0 bg-[#03081c]/60" />
+        </div>
+
       <Header />
 
-      <main className="max-w-7xl mx-auto px-8 py-10">
+      <main className="max-w-7xl mx-auto px-4 md:px-8 py-10 relative z-10">
         {loading ? (
-          <div className="space-y-6">
+          <div className="space-y-8 animate-fade-in-up mt-8">
             <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-              <div className="h-24 animate-pulse rounded-lg bg-[#2a2a2a]" />
-              <div className="h-24 animate-pulse rounded-lg bg-[#2a2a2a]" />
-              <div className="h-24 animate-pulse rounded-lg bg-[#2a2a2a]" />
-              <div className="h-24 animate-pulse rounded-lg bg-[#2a2a2a]" />
+              <Skeleton className="h-28" />
+              <Skeleton className="h-28" />
+              <Skeleton className="h-28" />
+              <Skeleton className="h-28" />
             </div>
-            <div className="h-14 animate-pulse rounded-lg bg-[#2a2a2a]" />
-            <div className="h-20 animate-pulse rounded-lg bg-[#2a2a2a]" />
-            <div className="h-20 animate-pulse rounded-lg bg-[#2a2a2a]" />
-            <div className="h-20 animate-pulse rounded-lg bg-[#2a2a2a]" />
+            <Skeleton className="h-16 w-full rounded-2xl" />
+            <div className="space-y-4">
+                <Skeleton className="h-24 w-full" />
+                <Skeleton className="h-24 w-full" />
+            </div>
           </div>
         ) : (
-          <>
+          <div className="animate-fade-in-up">
         <StatsGrid stats={stats} />
 
         <TabNavigation
@@ -108,7 +126,7 @@ export default function ChessDashboard() {
           title="Generate New Round?"
           description="This will create pairings for the next round. You can review them before starting the round."
           confirmText="Generate"
-          confirmColor="bg-[#fbbf24] hover:bg-[#fbbf24]/90"
+          confirmColor="bg-cyan-500 hover:bg-cyan-400 text-[#050d1e]"
         />
 
         <SimpleDialog
@@ -121,7 +139,7 @@ export default function ChessDashboard() {
           title="Start Round?"
           description="This will officially start the round for result entry."
           confirmText="Start Round"
-          confirmColor="bg-green-600 hover:bg-green-700"
+          confirmColor="bg-cyan-500 hover:bg-cyan-400 text-[#050d1e]"
         />
 
         <SimpleDialog
@@ -134,7 +152,7 @@ export default function ChessDashboard() {
           title="Remove Last Round?"
           description="This will delete the entire latest round. This action cannot be undone."
           confirmText="Remove"
-          confirmColor="bg-red-600 hover:bg-red-700"
+          confirmColor="bg-red-500 hover:bg-red-400 text-white"
         />
 
         {activeTab === "players" && (
@@ -172,7 +190,7 @@ export default function ChessDashboard() {
             />
           </div>
         )}
-          </>
+          </div>
         )}
       </main>
     </div>

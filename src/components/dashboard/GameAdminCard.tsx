@@ -59,10 +59,10 @@ export default function GameAdminCard({
   const getBtnStyle = (resultValue: string) => {
     const isSelected = selectedResult === resultValue;
     if (isSelected) {
-      if (resultValue === '1-0' || resultValue === '0-1') return "bg-[#FCD34D] text-black border-[#FCD34D] shadow-[0_0_15px_-3px_rgba(252,211,77,0.4)] scale-105 z-10";
-      return "bg-gray-600 text-white border-gray-600 shadow-[0_0_15px_-3px_rgba(75,85,99,0.4)] scale-105 z-10";
+      if (resultValue === '1-0' || resultValue === '0-1') return "bg-[#00e5ff] text-[#050d1e] border-[#00e5ff] shadow-[0_0_15px_rgba(0,229,255,0.4)] scale-105 z-10";
+      return "bg-cyan-900 text-[#00e5ff] border-cyan-500/40 shadow-[0_0_15px_rgba(0,229,255,0.2)] scale-105 z-10";
     }
-    return "bg-[#262626] text-gray-400 border-transparent hover:bg-[#333] hover:text-white hover:border-gray-600";
+    return "bg-cyan-500/5 text-cyan-500/60 border-cyan-500/10 hover:bg-cyan-500/10 hover:text-white hover:border-cyan-500/30";
   };
 
   const handleResultClick = (result: string) => {
@@ -79,37 +79,37 @@ export default function GameAdminCard({
 
   if (presence < 2) {
     return (
-      <div className="bg-[#1a1a1a] border border-[#222] rounded-lg p-3 flex flex-col sm:flex-row items-center gap-4 opacity-75 cursor-not-allowed relative py-4">
+      <div className="bg-[#071034]/60 backdrop-blur-xl border border-cyan-500/10 rounded-2xl p-4 flex flex-col sm:flex-row items-center gap-4 opacity-60 grayscale cursor-not-allowed relative py-6 shadow-xl">
         {/* Delete Button */}
         {isEditable && onDelete && (
           <button
             onClick={onDelete}
-            className="absolute top-2 left-2 p-1.5 rounded-md bg-red-900/20 hover:bg-red-900/40 text-red-500 hover:text-red-400 transition-colors border border-red-900/30 hover:border-red-900/50"
+            className="absolute top-3 left-3 p-2 rounded-xl bg-red-900/10 hover:bg-red-900/20 text-red-500 border border-red-500/20"
             title="Delete Game"
           >
-            <Trash2 className="w-3.5 h-3.5" />
+            <Trash2 className="w-4 h-4" strokeWidth={3} />
           </button>
         )}
         
         {/* Game Number */}
-        <div className="absolute bottom-0 left-2 text-gray-500 text-xs font-mono font-bold w-16 text-center sm:text-left">
-          GAME {gameNumber}
+        <div className="absolute top-3 right-5 text-cyan-500/20 text-[10px] font-black tracking-widest">
+          #MATCH_{gameNumber.toString().padStart(2, '0')}
         </div>
 
         {/* Player with Bye */}
-        <div className="flex-1 flex items-center justify-start gap-3 w-full ml-8">
-          <div className="text-sm font-medium text-[#FCD34D] truncate">
+        <div className="flex-1 flex items-center justify-center sm:justify-start gap-4 w-full ml-10">
+          <div className="text-lg font-black text-[#00e5ff] tracking-tight uppercase">
             {white}
           </div>
-          <div className="text-xs text-gray-500 italic">
-            receives a bye (1 point)
+          <div className="text-[10px] font-black text-cyan-500/30 uppercase tracking-[0.2em] italic">
+            → Automated 1 Pt Entry (BYE)
           </div>
         </div>
 
         {/* Status Badge */}
-        <div className="flex items-center gap-1 min-w-[140px] justify-end">
-          <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border flex items-center gap-1.5 bg-blue-900/10 text-blue-500/70 border-blue-900/20">
-            BYE
+        <div className="flex items-center gap-1 min-w-[140px] justify-end pr-2">
+          <span className="px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border flex items-center gap-2 bg-cyan-500/5 text-cyan-500/60 border-cyan-500/20">
+            SECURED
             <Lock className="w-3 h-3 opacity-60" />
           </span>
         </div>
@@ -119,37 +119,37 @@ export default function GameAdminCard({
 
   return (
     <div className={cn(
-      "bg-[#1a1a1a] border rounded-lg p-3 flex flex-col sm:flex-row items-center gap-4 transition-all duration-200 relative py-4",
+      "relative bg-[#071034]/60 backdrop-blur-xl border rounded-2xl p-4 flex flex-col sm:flex-row items-center gap-6 transition-all duration-500 group py-8 shadow-xl",
       isEditable
-        ? "border-[#333] hover:border-[#555] hover:bg-[#1f1f1f]"
-        : "border-[#222] opacity-75 cursor-not-allowed bg-[#151515]"
+        ? "border-cyan-500/10 hover:border-cyan-500/40 hover:bg-cyan-500/5 hover:scale-[1.01]"
+        : "border-cyan-500/5 opacity-60 grayscale cursor-not-allowed bg-[#050d1e]/40"
     )}>
       {/* Delete Button */}
       {isEditable && onDelete && (
         <button
           onClick={onDelete}
-          className="absolute top-2 left-2 p-1.5 rounded-md bg-red-900/20 hover:bg-red-900/40 text-red-500 hover:text-red-400 transition-colors border border-red-900/30 hover:border-red-900/50 z-20"
+          className="absolute top-3 left-3 p-2 rounded-xl bg-red-900/10 hover:bg-red-900/20 text-red-500 border border-red-500/20 z-20 transition-all opacity-0 group-hover:opacity-100"
           title="Delete Game"
         >
-          <Trash2 className="w-3.5 h-3.5" />
+          <Trash2 className="w-4 h-4" strokeWidth={3} />
         </button>
       )}
 
       {/* Game Number */}
-      <div className="absolute bottom-2 left-2 text-gray-500 text-xs font-mono font-bold w-16 text-center sm:text-left">
-        GAME {gameNumber}
+      <div className="absolute top-3 right-5 text-cyan-500/10 text-[10px] font-black tracking-widest group-hover:text-cyan-500/30 transition-all">
+        #MATCH_{gameNumber.toString().padStart(2, '0')}
       </div>
 
       {/* Players */}
-      <div className="flex-1 flex items-center justify-center sm:justify-start gap-3 w-full">
-        <div className={cn("flex-1 text-right text-sm font-medium truncate transition-colors duration-200",
-          selectedResult === '1-0' ? "text-[#FCD34D] font-bold" : "text-gray-200"
+      <div className="flex-1 flex items-center justify-center sm:justify-start gap-4 w-full">
+        <div className={cn("flex-1 text-right text-lg font-black tracking-tight uppercase truncate transition-all duration-300",
+          selectedResult === '1-0' ? "text-[#00e5ff] scale-105 drop-shadow-[0_0_10px_rgba(0,229,255,0.4)]" : "text-gray-400/80"
         )}>
           {white}
         </div>
-        <div className="text-xs text-gray-600 font-bold px-2">VS</div>
-        <div className={cn("flex-1 text-left text-sm font-medium truncate transition-colors duration-200",
-          selectedResult === '0-1' ? "text-[#FCD34D] font-bold" : "text-gray-200"
+        <div className="text-[10px] text-cyan-500/20 font-black italic px-4 group-hover:text-cyan-500/40 transition-all uppercase tracking-widest shrink-0">VS</div>
+        <div className={cn("flex-1 text-left text-lg font-black tracking-tight uppercase truncate transition-all duration-300",
+          selectedResult === '0-1' ? "text-[#00e5ff] scale-105 drop-shadow-[0_0_10px_rgba(0,229,255,0.4)]" : "text-gray-400/80"
         )}>
           {black}
         </div>
@@ -198,10 +198,10 @@ export default function GameAdminCard({
         ) : (
           <div className="flex items-center gap-2" title="This game is locked">
             <span className={cn(
-              "px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border flex items-center gap-1.5",
-              status?.toLowerCase().includes("win") ? "bg-green-900/10 text-green-500/70 border-green-900/20" :
-                status?.toLowerCase().includes("draw") ? "bg-gray-800/50 text-gray-500 border-gray-700/50" :
-                  "bg-yellow-900/10 text-yellow-500/70 border-yellow-900/20"
+              "px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border flex items-center gap-2",
+              status?.toLowerCase().includes("win") ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/20 shadow-[0_0_15px_rgba(0,229,255,0.1)]" :
+                status?.toLowerCase().includes("draw") ? "bg-cyan-500/5 text-cyan-500/40 border-cyan-500/10" :
+                  "bg-orange-500/10 text-orange-400/60 border-orange-500/20"
             )}>
               {status}
               <Lock className="w-3 h-3 opacity-60" />

@@ -1,4 +1,4 @@
-﻿import React from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
 
 interface TabNavigationProps {
@@ -19,12 +19,12 @@ const TabNavigation: React.FC<TabNavigationProps> = ({
   generateDisabled = false,
 }) => {
   const containerClass =
-    "flex gap-1 bg-[#1a1a1a] p-1 rounded-xl w-fit border border-[#333]";
+    "flex gap-1 bg-[#071034]/70 backdrop-blur-md p-1.5 rounded-2xl w-fit border border-cyan-500/20 shadow-lg";
   const activeClass =
-    "bg-[#fbbf24] text-black shadow-lg shadow-yellow-500/20 hover:bg-yellow-400";
-  const inactiveClass = "text-gray-400 hover:text-white hover:bg-[#262626]";
+    "bg-[#00e5ff] text-[#050d1e] font-black tracking-widest uppercase shadow-[0_0_20px_rgba(0,229,255,0.4)] hover:bg-cyan-400 hover:scale-[1.02] transition-all duration-300";
+  const inactiveClass = "text-cyan-500/60 font-bold tracking-widest uppercase hover:text-white hover:bg-cyan-500/10";
   const disabledClass =
-    "opacity-50 cursor-not-allowed hover:bg-transparent hover:text-inherit shadow-none";
+    "opacity-30 cursor-not-allowed hover:bg-transparent hover:text-inherit shadow-none";
 
   return (
     <div className="flex flex-col md:flex-row gap-8 md:gap-0 justify-between items-center mb-8">

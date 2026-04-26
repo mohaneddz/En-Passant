@@ -1,42 +1,188 @@
-@import url('https://fonts.googleapis.com/css2?family=Lexend+Deca:wght@100..900&display=swap');
+/* ─────────────────────────────────────────────────────────────────────────────
+   SINGLE ENTRY POINT — only one file should @import tailwindcss in Tailwind v4
+   ───────────────────────────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 
 @import "tailwindcss";
 @import "tw-animate-css";
 
-body{
-    background-repeat: no-repeat;
-    background-attachment: fixed;
-    font-family: "Lexend Deca", sans-serif;
+/* ── Tailwind v4 theme tokens ────────────────────────────────────────────── */
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background:        var(--background);
+  --color-foreground:        var(--foreground);
+  --color-primary:           var(--primary);
+  --color-primary-foreground:var(--primary-foreground);
+  --color-secondary:         var(--secondary);
+  --color-card:              var(--card);
+  --color-card-foreground:   var(--card-foreground);
+  --color-muted:             var(--muted);
+  --color-muted-foreground:  var(--muted-foreground);
+  --color-accent:            var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive:       var(--destructive);
+  --color-border:            var(--border);
+  --color-input:             var(--input);
+  --color-ring:              var(--ring);
+  --font-sans:               var(--font-inter), 'Inter', sans-serif;
+  --font-heading:            var(--font-tomo-bossa), 'Inter', sans-serif;
+  --radius-sm:  calc(var(--radius) - 4px);
+  --radius-md:  calc(var(--radius) - 2px);
+  --radius-lg:  var(--radius);
+  --radius-xl:  calc(var(--radius) + 4px);
 }
 
-main {
-    min-height: calc(100vh - 2rem);
+/* ── CSS custom properties ───────────────────────────────────────────────── */
+:root {
+  --radius: 0.75rem;
+
+  --background:          #050d1e;
+  --foreground:          #f0f6ff;
+
+  --primary:             #00e5ff;
+  --primary-foreground:  #050d1e;
+
+  --secondary:           #bd00ff;
+  --secondary-foreground:#f0f6ff;
+
+  --card:                rgba(7, 16, 52, 0.85);
+  --card-foreground:     #f0f6ff;
+
+  --muted:               rgba(255,255,255,0.06);
+  --muted-foreground:    rgba(176,210,240,0.65);
+
+  --accent:              #00e5ff;
+  --accent-foreground:   #050d1e;
+
+  --destructive:         #ff3860;
+  --destructive-foreground: #fff;
+
+  --border:              rgba(0,229,255,0.18);
+  --input:               rgba(0,229,255,0.12);
+  --ring:                rgba(0,229,255,0.5);
 }
 
+/* ── Base reset ──────────────────────────────────────────────────────────── */
+@layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* ── Global element styles ───────────────────────────────────────────────── */
 html {
   font-size: 16px;
+  scroll-behavior: smooth;
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
 }
 
-@media (max-width: 1440px) {
-  html {
-    font-size: 14px;
-  }
+body {
+  background-color: var(--background);
+  background-image:
+    linear-gradient(180deg,
+      rgba(3,13,46,0.82)  0%,
+      rgba(2,10,36,0.90) 55%,
+      rgba(1,6,24,0.95) 100%),
+    url("/images/backgrounds/background.svg");
+  background-position: center top;
+  background-repeat:   no-repeat;
+  background-size:     cover;
+  background-attachment: fixed;
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
-@media (max-width: 1200px) {
-  html {
-    font-size: 12px;
-  }
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading), var(--font-sans);
 }
 
-@media (max-width: 1080px) {
-  html {
-    font-size: 10px;
-  }
+button,
+[role="button"],
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+input[type="checkbox"],
+input[type="radio"],
+select,
+label[for] {
+  cursor: pointer;
 }
 
-@media (max-width: 480px) {
-  html {
-    font-size: 9px;
-  }
+/* ── Scrollbar ───────────────────────────────────────────────────────────── */
+::-webkit-scrollbar       { width: 6px; }
+::-webkit-scrollbar-track { background: #050d1e; }
+::-webkit-scrollbar-thumb {
+  background: rgba(0,229,255,0.35);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(0,229,255,0.65); }
+html { scrollbar-width: thin; scrollbar-color: rgba(0,229,255,0.35) #050d1e; }
+
+/* ── Selection ───────────────────────────────────────────────────────────── */
+::selection {
+  background-color: rgba(0,229,255,0.3);
+  color: #fff;
+}
+
+/* ── Focus ───────────────────────────────────────────────────────────────── */
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  border-color:  rgba(103,232,249,0.75);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(34,211,238,0.28);
+}
+
+/* ── Utility classes ─────────────────────────────────────────────────────── */
+.glass-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(16px);
+}
+
+.center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.col   { flex-direction: column; }
+.full  { width: 100%; height: 100%; }
+
+/* ── Keyframe animations ─────────────────────────────────────────────────── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s ease-out both;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-8px); }
+}
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 10px rgba(0,229,255,0.3); }
+  50%       { box-shadow: 0 0 30px rgba(0,229,255,0.7); }
+}
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
 }
