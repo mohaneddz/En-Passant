@@ -21,6 +21,15 @@ import { GamesListRef } from "@/components/dashboard/GamesList";
 import { Player } from "@/types/player";
 
 export const useDashboard = () => {
+  const getErrorMessage = (error: unknown, fallback: string) => {
+    if (typeof error === "string" && error.trim()) return error;
+    if (error instanceof Error && error.message) return error.message;
+    if (error && typeof error === "object" && "message" in error) {
+      const message = (error as { message?: unknown }).message;
+      if (typeof message === "string" && message.trim()) return message;
+    }
+    return fallback;
+  };
   const [activeTab, setActiveTab] = useState("players");
   const [players, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
@@ -113,7 +122,7 @@ export const useDashboard = () => {
     try {
       const result = await generateScheduledRound();
       if (!result.success) {
-        throw new Error(String(result.error ?? "Failed to generate round"));
+        throw new Error(getErrorMessage(result.error, "Failed to generate round"));
       }
       setShowGenerateDialog(false);
       await Promise.all([fetchPlayers(), fetchStats(), fetchRounds()]);
@@ -127,7 +136,7 @@ export const useDashboard = () => {
     try {
       const result = await startScheduledRound();
       if (!result.success) {
-        throw new Error(String(result.error ?? "Failed to start round"));
+        throw new Error(getErrorMessage(result.error, "Failed to start round"));
       }
       setShowStartDialog(false);
       await Promise.all([fetchPlayers(), fetchStats(), fetchRounds()]);
@@ -141,7 +150,7 @@ export const useDashboard = () => {
     try {
       const result = await removeLastRound();
       if (!result.success) {
-        throw new Error(String(result.error ?? "Failed to remove round"));
+        throw new Error(getErrorMessage(result.error, "Failed to remove round"));
       }
       setShowRemoveDialog(false);
       await Promise.all([fetchPlayers(), fetchStats(), fetchRounds()]);

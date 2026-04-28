@@ -27,8 +27,8 @@ const GamesList = forwardRef<GamesListRef, GamesListProps>(({ games, onValidateR
 
   if (!games || games.length === 0) {
     return (
-      <div className="bg-[#1a1a1a] border border-[#333] rounded-xl p-12 text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
-        <p className="text-gray-500">No rounds generated yet.</p>
+      <div className="bg-[#071034]/60 backdrop-blur-xl border border-cyan-500/20 rounded-2xl p-12 text-center animate-in fade-in slide-in-from-bottom-4 duration-500 shadow-2xl">
+        <p className="text-cyan-500/60 font-black tracking-widest uppercase text-sm">No rounds generated yet.</p>
       </div>
     );
   }
@@ -37,8 +37,8 @@ const GamesList = forwardRef<GamesListRef, GamesListProps>(({ games, onValidateR
 
   if (!currentRound) {
     return (
-      <div className="bg-[#1a1a1a] border border-[#333] rounded-xl p-12 text-center">
-        <p className="text-red-500">Error loading round data.</p>
+      <div className="bg-[#071034]/60 backdrop-blur-xl border border-red-500/20 rounded-2xl p-12 text-center shadow-2xl">
+        <p className="text-red-400 font-black tracking-widest uppercase text-sm">Error loading round data.</p>
       </div>
     );
   }

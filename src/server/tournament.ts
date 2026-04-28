@@ -30,7 +30,7 @@ function isNonNullScore(score: number | null): score is number {
 
 export function matchStatusFromRecord(match: MatchRecord): MatchStatus {
   if (match.is_bye) {
-    return "WHITE_WINS";
+    return match.white_score === 1 ? "WHITE_WINS" : "PENDING";
   }
 
   const { white_score: whiteScore, black_score: blackScore } = match;
@@ -47,12 +47,21 @@ export function matchStatusFromRecord(match: MatchRecord): MatchStatus {
 }
 
 export function gameFromMatch(match: MatchRecord): Game {
+  const whiteBye = Boolean(match.white_bye);
+  const blackBye = Boolean(match.black_bye);
+  let presence = 2;
+  if (match.black_player_id == null || (whiteBye !== blackBye)) {
+    presence = 1;
+  } else if (whiteBye && blackBye) {
+    presence = 0;
+  }
+
   return {
     id: match.id,
     white: match.white_player_id,
     black: match.black_player_id ?? 0,
     status: matchStatusFromRecord(match),
-    presence: match.is_bye ? 1 : 2,
+    presence,
     round: match.round_number,
   };
 }
@@ -68,10 +77,6 @@ function isCompletedNonBye(match: MatchRecord): boolean {
     isNonNullScore(match.black_score) &&
     typeof match.black_player_id === "number"
   );
-}
-
-function isCompletedBye(match: MatchRecord): boolean {
-  return match.is_bye && match.white_score === 1 && match.black_player_id == null;
 }
 
 function computeColorStreak(history: Array<"white" | "black">): number {
@@ -122,9 +127,15 @@ export function derivePlayers(players: PlayerRow[], matches: MatchRecord[]): Pla
       continue;
     }
 
-    if (isCompletedBye(match)) {
+    if (!isNonNullScore(match.white_score)) {
+      continue;
+    }
+
+    if (match.black_player_id == null) {
       white.games += 1;
-      white.byes += 1;
+      if (Boolean(match.white_bye)) {
+        white.byes += 1;
+      }
       continue;
     }
 
@@ -133,15 +144,15 @@ export function derivePlayers(players: PlayerRow[], matches: MatchRecord[]): Pla
     }
 
     const black = accumulators.get(match.black_player_id);
-    if (!black) {
-      continue;
-    }
+    if (!black) continue;
 
     const whiteScore = match.white_score as number;
     const blackScore = match.black_score as number;
 
     white.games += 1;
     black.games += 1;
+    if (Boolean(match.white_bye)) white.byes += 1;
+    if (Boolean(match.black_bye)) black.byes += 1;
 
     white.opponents.add(black.row.id);
     black.opponents.add(white.row.id);
@@ -162,7 +173,8 @@ export function derivePlayers(players: PlayerRow[], matches: MatchRecord[]): Pla
   }
 
   for (const entry of accumulators.values()) {
-    entry.score = entry.wins + entry.byes + entry.draws * 0.5;
+    // Byes do not add points; they only act as a negative tie-break.
+    entry.score = entry.wins + entry.draws * 0.5;
     entry.color = computeColorStreak(entry.colorHistory);
   }
 
@@ -205,6 +217,11 @@ export function sortByStandings(players: Player[]): Player[] {
   return [...players].sort((a, b) => {
     if (b.score !== a.score) {
       return b.score - a.score;
+    }
+
+    // Bye is a negative tiebreak: fewer byes ranks higher.
+    if (a.byes !== b.byes) {
+      return a.byes - b.byes;
     }
 
     if (b.buchholz !== a.buchholz) {

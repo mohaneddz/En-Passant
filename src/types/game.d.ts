@@ -8,6 +8,8 @@ export interface MatchRecord {
   white_score: number | null;
   black_score: number | null;
   is_bye: boolean;
+  white_bye?: boolean;
+  black_bye?: boolean;
   created_at?: string;
   updated_at?: string;
 }

@@ -52,8 +52,8 @@ export const useGamesList = (games: any[], onGameUpdate?: () => void, onValidate
       rounds[currentIndex].games.forEach((game: any, index: number) => {
         const s = game.status?.toUpperCase();
         
-        // Check if it's a bye (presence < 2 means one player is absent)
-        if (game.presence < 2) {
+        // presence=1 => one player absent/solo BYE. presence=0 means both absent.
+        if (game.presence === 1) {
           initialByes[index] = true;
         }
         
@@ -76,7 +76,15 @@ export const useGamesList = (games: any[], onGameUpdate?: () => void, onValidate
   };
 
   const handleResultSelect = async (gameIndex: number, result: string, isBye: boolean, game: any) => {
-    setSelectedResults(prev => ({ ...prev, [gameIndex]: result }));
+    setSelectedResults(prev => {
+      const next = { ...prev };
+      if (result) {
+        next[gameIndex] = result;
+      } else {
+        delete next[gameIndex];
+      }
+      return next;
+    });
     setSelectedByes(prev => ({ ...prev, [gameIndex]: isBye }));
 
     if (!game) {
@@ -95,8 +103,12 @@ export const useGamesList = (games: any[], onGameUpdate?: () => void, onValidate
       dbResult = 'DRAW';
     }
 
-    // Calculate presence: 1 if BYE, 2 otherwise
-    const presence = isBye ? 1 : 2;
+    let presence = typeof game?.presence === "number" ? game.presence : 2;
+    if (isBye) {
+      presence = 1;
+    } else if (presence === 1) {
+      presence = 2;
+    }
 
     try {
       await updateGameResult(

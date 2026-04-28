@@ -72,7 +72,7 @@ const AddPlayerForm: React.FC<AddPlayerFormProps> = ({
         Player Registration Hub
       </h2>
 
-      <div className="grid md:grid-cols-2 gap-10">
+      <div className="grid md:grid-cols-[1fr_auto_1fr] gap-8 md:gap-12 relative">
         <div className="space-y-6">
           <div className="flex items-center gap-2 mb-2">
             <Plus className="w-4 h-4 text-cyan-400" />
@@ -116,6 +116,9 @@ const AddPlayerForm: React.FC<AddPlayerFormProps> = ({
             </button>
           </div>
         </div>
+
+        {/* Divider */}
+        <div className="hidden md:block w-px bg-cyan-500/10 self-stretch" />
 
         <div className="space-y-6">
           <div className="flex items-center gap-2 mb-2">

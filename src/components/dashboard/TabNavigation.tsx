@@ -7,8 +7,10 @@ interface TabNavigationProps {
   onGenerateRound?: () => void;
   onStartRound?: () => void;
   onRemoveLastRound?: () => void;
+  removeRoundLabel?: string;
   generateDisabled?: boolean;
   startDisabled?: boolean;
+  removeDisabled?: boolean;
 }
 
 const TabNavigation: React.FC<TabNavigationProps> = ({
@@ -16,7 +18,9 @@ const TabNavigation: React.FC<TabNavigationProps> = ({
   setActiveTab,
   onGenerateRound,
   onRemoveLastRound,
+  removeRoundLabel = "Remove Last Round",
   generateDisabled = false,
+  removeDisabled = false,
 }) => {
   const containerClass =
     "flex gap-1 bg-[#071034]/70 backdrop-blur-md p-1.5 rounded-2xl w-fit border border-cyan-500/20 shadow-lg";
@@ -56,9 +60,12 @@ const TabNavigation: React.FC<TabNavigationProps> = ({
         </Button>
         <Button
           onClick={onRemoveLastRound}
-          className="bg-red-700/70 text-white shadow-lg shadow-red-500/20 hover:bg-red-600/70"
+          disabled={removeDisabled}
+          className={`bg-red-700/70 text-white shadow-lg shadow-red-500/20 hover:bg-red-600/70 ${
+            removeDisabled ? `${disabledClass} bg-gray-800 text-gray-500` : ""
+          }`}
         >
-          Remove Last Round
+          {removeRoundLabel}
         </Button>
       </div>
     </div>

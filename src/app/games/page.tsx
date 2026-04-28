@@ -1,30 +1,81 @@
+"use client";
+
 import { Swords } from "lucide-react";
 import { getGames } from "@/server/games";
 import GamesTabs from "@/components/GamesTabs";
 import Image from "next/image";
+import { useEffect, useRef, useState } from "react";
 
-export const dynamic = "force-dynamic";
-
-export default async function Page() {
-    const games = await getGames();
-
+function buildRounds(games: any[]) {
     const roundsMap = new Map();
+
     games.forEach((game) => {
         const roundId = String(game.round);
+
         if (!roundsMap.has(roundId)) {
             roundsMap.set(roundId, {
                 id: roundId,
                 label: `Round ${roundId}`,
-                status: 'Finished',
+                status: "Finished",
                 games: []
             });
         }
+
         const round = roundsMap.get(roundId);
         round.games.push(game);
-
     });
 
-    const allRounds = Array.from(roundsMap.values()).sort((a: any, b: any) => Number(a.id) - Number(b.id));
+    return Array.from(roundsMap.values()).sort((a: any, b: any) => Number(a.id) - Number(b.id));
+}
+
+export default function Page() {
+    const [allRounds, setAllRounds] = useState<any[]>([]);
+    const lastSignatureRef = useRef("");
+
+    useEffect(() => {
+        let isMounted = true;
+
+        const loadGames = async () => {
+            try {
+                const games = await getGames();
+                if (isMounted) {
+                    const nextRounds = buildRounds(games);
+                    const nextSignature = JSON.stringify(
+                        nextRounds.map((round) => ({
+                            id: round.id,
+                            label: round.label,
+                            status: round.status,
+                            games: round.games.map((game: any) => ({
+                                id: game.id,
+                                white: game.white,
+                                black: game.black,
+                                status: game.status,
+                                presence: game.presence,
+                                round: game.round,
+                            })),
+                        }))
+                    );
+
+                    if (nextSignature !== lastSignatureRef.current) {
+                        lastSignatureRef.current = nextSignature;
+                        setAllRounds(nextRounds);
+                    }
+                }
+            } catch (error) {
+                console.error("Failed to refresh games page data:", error);
+            }
+        };
+
+        void loadGames();
+        const interval = window.setInterval(() => {
+            void loadGames();
+        }, 60000);
+
+        return () => {
+            isMounted = false;
+            window.clearInterval(interval);
+        };
+    }, []);
 
     return (
         <div className="relative min-h-screen w-full flex flex-col items-center p-6 md:p-10 font-sans overflow-hidden">

@@ -66,18 +66,20 @@ export default function GameAdminCard({
   };
 
   const handleResultClick = (result: string) => {
-    onSelectResult?.(result, localIsBye);
+    const nextResult = selectedResult === result ? "" : result;
+    onSelectResult?.(nextResult, localIsBye);
   };
 
   const handleByeToggle = () => {
     const newByeState = !localIsBye;
     setLocalIsBye(newByeState);
-    // Use current result or default to '1-0' for BYE games
-    const resultToUse = selectedResult || '1-0';
+    const resultToUse = selectedResult || "";
     onSelectResult?.(resultToUse, newByeState);
   };
 
-  if (presence < 2) {
+  const isSoloByeReadonly = !isEditable && presence === 1 && (!blackPlayer || blackPlayer === 0);
+
+  if (isSoloByeReadonly) {
     return (
       <div className="bg-[#071034]/60 backdrop-blur-xl border border-cyan-500/10 rounded-2xl p-4 flex flex-col sm:flex-row items-center gap-4 opacity-60 grayscale cursor-not-allowed relative py-6 shadow-xl">
         {/* Delete Button */}
@@ -141,18 +143,20 @@ export default function GameAdminCard({
       </div>
 
       {/* Players */}
-      <div className="flex-1 flex items-center justify-center sm:justify-start gap-4 w-full">
-        <div className={cn("flex-1 text-right text-lg font-black tracking-tight uppercase truncate transition-all duration-300",
-          selectedResult === '1-0' ? "text-[#00e5ff] scale-105 drop-shadow-[0_0_10px_rgba(0,229,255,0.4)]" : "text-gray-400/80"
-        )}>
-          {white}
-        </div>
-        <div className="text-[10px] text-cyan-500/20 font-black italic px-4 group-hover:text-cyan-500/40 transition-all uppercase tracking-widest shrink-0">VS</div>
-        <div className={cn("flex-1 text-left text-lg font-black tracking-tight uppercase truncate transition-all duration-300",
-          selectedResult === '0-1' ? "text-[#00e5ff] scale-105 drop-shadow-[0_0_10px_rgba(0,229,255,0.4)]" : "text-gray-400/80"
-        )}>
-          {black}
-        </div>
+      <div className="flex-1 flex items-center justify-center gap-4 w-full">
+        <>
+          <div className={cn("flex-1 text-right text-lg font-black tracking-tight uppercase truncate transition-all duration-300",
+            selectedResult === '1-0' ? "text-[#00e5ff] scale-105 drop-shadow-[0_0_10px_rgba(0,229,255,0.4)]" : "text-gray-400/80"
+          )}>
+            {white}
+          </div>
+          <div className="text-[10px] text-cyan-500/20 font-black italic px-4 group-hover:text-cyan-500/40 transition-all uppercase tracking-widest shrink-0">VS</div>
+          <div className={cn("flex-1 text-left text-lg font-black tracking-tight uppercase truncate transition-all duration-300",
+            selectedResult === '0-1' ? "text-[#00e5ff] scale-105 drop-shadow-[0_0_10px_rgba(0,229,255,0.4)]" : "text-gray-400/80"
+          )}>
+            {black}
+          </div>
+        </>
       </div>
 
       {/* Actions / Status */}

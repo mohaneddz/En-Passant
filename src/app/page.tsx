@@ -71,7 +71,7 @@ export default function ChessLandingPage() {
         {/* Background image */}
         <div className="absolute inset-0 -z-10">
           <Image
-            src="/images/backgrounds/background.png"
+            src="/images/backgrounds/background.avif"
             alt="Olympole Chess cyber-stadium background"
             fill
             priority

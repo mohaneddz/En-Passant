@@ -5,7 +5,6 @@ import Image from "next/image";
 
 import { useDashboard } from "@/hooks/useDashboard";
 
-import Header from "@/components/dashboard/Header";
 import StatsGrid from "@/components/dashboard/StatsGrid";
 import TabNavigation from "@/components/dashboard/TabNavigation";
 import AddPlayerForm from "@/components/dashboard/AddPlayerForm";
@@ -71,6 +70,10 @@ export default function ChessDashboard() {
     refreshGames();
   }, []);
 
+  const latestRound = games.length > 0 ? Math.max(...games.map((game) => game.round)) : null;
+  const removeRoundLabel = latestRound ? `Remove Round ${latestRound}` : "Remove Last Round";
+  const removeDisabled = latestRound === null;
+
   return (
     <div className="relative min-h-screen font-sans">
         {/* Background */}
@@ -84,8 +87,6 @@ export default function ChessDashboard() {
             />
             <div className="absolute inset-0 bg-[#03081c]/60" />
         </div>
-
-      <Header />
 
       <main className="max-w-7xl mx-auto px-4 md:px-8 py-10 relative z-10">
         {loading ? (
@@ -111,9 +112,15 @@ export default function ChessDashboard() {
           setActiveTab={setActiveTab}
           onGenerateRound={() => setShowGenerateDialog(true)}
           onStartRound={() => setShowStartDialog(true)}
-          onRemoveLastRound={() => setShowRemoveDialog(true)}
+          onRemoveLastRound={() => {
+            if (!removeDisabled) {
+              setShowRemoveDialog(true);
+            }
+          }}
+          removeRoundLabel={removeRoundLabel}
           generateDisabled={hasPendingRound}
           startDisabled={!hasPendingRound}
+          removeDisabled={removeDisabled}
         />
 
         <SimpleDialog
@@ -143,14 +150,18 @@ export default function ChessDashboard() {
         />
 
         <SimpleDialog
-          isOpen={showRemoveDialog}
+          isOpen={showRemoveDialog && !removeDisabled}
           onClose={() => setShowRemoveDialog(false)}
           onConfirm={async () => {
             await handleRemoveLastRound();
             await refreshGames();
           }}
-          title="Remove Last Round?"
-          description="This will delete the entire latest round. This action cannot be undone."
+          title={latestRound ? `Remove Round ${latestRound}?` : "Remove Last Round?"}
+          description={
+            latestRound
+              ? `This will delete all games from round ${latestRound}. This action cannot be undone.`
+              : "This will delete the entire latest round. This action cannot be undone."
+          }
           confirmText="Remove"
           confirmColor="bg-red-500 hover:bg-red-400 text-white"
         />

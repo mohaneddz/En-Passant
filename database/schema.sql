@@ -21,6 +21,8 @@ create table if not exists public.matches (
   white_score numeric(2, 1),
   black_score numeric(2, 1),
   is_bye boolean not null default false,
+  white_bye boolean not null default false,
+  black_bye boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
 
@@ -39,17 +41,30 @@ create table if not exists public.matches (
         is_bye = false and
         black_player_id is not null and
         (
-          (white_score is null and black_score is null) or
-          (white_score is not null and black_score is not null and white_score + black_score = 1.0)
+          (white_score is null and black_score is null)
+          or
+          (
+            white_score is not null and black_score is not null and white_score + black_score = 1.0
+          )
         )
       )
       or
       (
         is_bye = true and
         black_player_id is null and
-        white_score = 1 and
-        black_score is null
+        black_score is null and
+        white_bye = true and
+        black_bye = false and
+        (
+          white_score is null or
+          white_score = 1
+        )
       )
+    ),
+
+  constraint matches_bye_flags_only_with_players
+    check (
+      black_player_id is not null or (white_bye = true and black_bye = false)
     )
 );
 

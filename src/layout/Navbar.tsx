@@ -14,6 +14,7 @@ const navItems = [
 export default function Navbar() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   /* Close on outside click */
@@ -33,6 +34,32 @@ export default function Navbar() {
       document.removeEventListener("keydown", onEscape);
     };
   }, [mobileOpen]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadSession = async () => {
+      try {
+        const response = await fetch("/api/auth/session", { cache: "no-store" });
+        if (!response.ok) return;
+
+        const payload = (await response.json()) as { authenticated?: boolean };
+        if (isMounted) {
+          setIsAuthenticated(Boolean(payload.authenticated));
+        }
+      } catch {
+        if (isMounted) {
+          setIsAuthenticated(false);
+        }
+      }
+    };
+
+    void loadSession();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   return (
     <header
@@ -102,6 +129,22 @@ export default function Navbar() {
           })}
         </nav>
 
+        {/* Desktop Dashboard Button */}
+        {isAuthenticated && (
+          <Link
+            href="/dashboard"
+            className="ml-auto hidden md:inline-flex items-center rounded-xl border px-4 py-2 text-xs font-black tracking-[0.1em] uppercase transition-all"
+            style={{
+              borderColor: "rgba(0,229,255,0.3)",
+              background: pathname.startsWith("/dashboard")
+                ? "rgba(0,229,255,0.2)"
+                : "rgba(0,229,255,0.08)",
+              color: "#00e5ff",
+            }}
+          >
+            Dashboard
+          </Link>
+        )}
 
 
         {/* Mobile menu button */}
@@ -147,6 +190,20 @@ export default function Navbar() {
                     {item.name}
                   </Link>
                 ))}
+                {isAuthenticated && (
+                  <Link
+                    href="/dashboard"
+                    onClick={() => setMobileOpen(false)}
+                    className="mt-1 block rounded-xl px-4 py-3 text-sm font-semibold tracking-[0.08em] transition-colors hover:bg-cyan-300/10"
+                    style={{
+                      color: pathname.startsWith("/dashboard")
+                        ? "#00e5ff"
+                        : "rgba(224,242,255,0.88)",
+                    }}
+                  >
+                    Dashboard
+                  </Link>
+                )}
               </nav>
 
             </div>

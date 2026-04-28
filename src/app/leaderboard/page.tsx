@@ -2,7 +2,7 @@
 import { CrownIcon } from "@/components/CrownIcon";
 import { MedalIcon } from "@/components/MedalIcon";
 import { getLeaderboard } from "@/server/leaderboard";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 
 import type { Player } from "@/types/player";
@@ -12,28 +12,69 @@ export default function LeaderboardPage() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const lastSignatureRef = useRef("");
 
   useEffect(() => {
-    const loadData = async () => {
+    let isMounted = true;
+
+    const loadData = async (showLoading = false) => {
+      if (showLoading && isMounted) {
+        setLoading(true);
+      }
+
       try {
         const data = await getLeaderboard();
-        // Sort by score descending, then Buchholz (tiebreaker), then rating
+        // Sort by score descending, then byes ascending (negative tiebreak), then Buchholz, then rating
         const sorted = data.sort((a, b) => {
           if ((b.score || 0) !== (a.score || 0)) return (b.score || 0) - (a.score || 0);
+          if ((a.byes || 0) !== (b.byes || 0)) return (a.byes || 0) - (b.byes || 0);
           if ((b.buchholz || 0) !== (a.buchholz || 0)) return (b.buchholz || 0) - (a.buchholz || 0);
           return (b.rating || 0) - (a.rating || 0);
         });
         // Assign rank
         const ranked = sorted.map((p, i) => ({ ...p, rank: i + 1 }));
-        setPlayers(ranked);
+        if (isMounted) {
+          const nextSignature = JSON.stringify(
+            ranked.map((player) => ({
+              id: player.id,
+              rank: player.rank,
+              score: player.score,
+              buchholz: player.buchholz,
+              wins: player.wins,
+              draws: player.draws,
+              losses: player.losses,
+              byes: player.byes,
+            }))
+          );
+
+          if (nextSignature !== lastSignatureRef.current) {
+            lastSignatureRef.current = nextSignature;
+            setPlayers(ranked);
+          }
+
+          setError(null);
+        }
       } catch (err) {
         console.error(err);
-        setError("Failed to load leaderboard");
+        if (isMounted) {
+          setError("Failed to load leaderboard");
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
-    loadData();
+
+    void loadData(true);
+    const interval = window.setInterval(() => {
+      void loadData(false);
+    }, 60000);
+
+    return () => {
+      isMounted = false;
+      window.clearInterval(interval);
+    };
   }, []);
 
   if (loading) {
@@ -146,7 +187,7 @@ export default function LeaderboardPage() {
               
               {/* Desktop view */}
               <div className="col-span-1 text-center font-bold text-cyan-400 hidden md:block text-shadow-glow">
-                {player.wins + player.byes}
+                {player.wins}
               </div>
               <div className="col-span-2 text-center font-bold text-gray-400 hidden md:block">
                 {player.draws}
@@ -157,7 +198,7 @@ export default function LeaderboardPage() {
 
               {/* Mobile view */}
               <div className="col-span-4 md:hidden text-center text-sm font-bold">
-                 <span className="text-cyan-400">{player.wins + player.byes}</span>
+                 <span className="text-cyan-400">{player.wins}</span>
                  <span className="text-gray-600 mx-1">/</span>
                  <span className="text-gray-400">{player.draws}</span>
                  <span className="text-gray-600 mx-1">/</span>

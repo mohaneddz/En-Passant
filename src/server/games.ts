@@ -162,7 +162,11 @@ interface PairingCandidate {
   penalty: number;
 }
 
-function calculatePairingPenalty(p1: Player, p2: Player): number {
+function calculatePairingPenalty(
+  p1: Player,
+  p2: Player,
+  allowRematch = false
+): number {
   let penalty = 0;
 
   const ratingDiff = Math.abs((p1.elo || 1500) - (p2.elo || 1500));
@@ -181,7 +185,7 @@ function calculatePairingPenalty(p1: Player, p2: Player): number {
   if (p1Pref === "NEUTRAL" && p2Pref === "NEUTRAL") penalty += 1;
 
   if (p1.opponents.includes(p2.id) || p2.opponents.includes(p1.id)) {
-    penalty += 10000;
+    penalty += allowRematch ? 250 : 10000;
   }
 
   return penalty;
@@ -212,7 +216,8 @@ function createScoreBrackets(players: Player[]): ScoreBracket[] {
 
 function pairBracket(
   players: Player[],
-  usedGlobal: Set<number>
+  usedGlobal: Set<number>,
+  allowRematch = false
 ): { p1: Player; p2: Player }[] | null {
   if (players.length === 0) return [];
   if (players.length === 1) return null;
@@ -221,14 +226,15 @@ function pairBracket(
   if (available.length === 0) return [];
   if (available.length === 1) return null;
 
-  return backtrackPair(available, 0, [], usedGlobal);
+  return backtrackPair(available, 0, [], usedGlobal, allowRematch);
 }
 
 function backtrackPair(
   players: Player[],
   index: number,
   currentPairs: { p1: Player; p2: Player }[],
-  used: Set<number>
+  used: Set<number>,
+  allowRematch = false
 ): { p1: Player; p2: Player }[] | null {
   if (index >= players.length) {
     return currentPairs;
@@ -245,9 +251,8 @@ function backtrackPair(
     if (used.has(players[i].id)) continue;
 
     const p2 = players[i];
-    const penalty = calculatePairingPenalty(p1, p2);
-
-    if (penalty < 10000) {
+    const penalty = calculatePairingPenalty(p1, p2, allowRematch);
+    if (allowRematch || penalty < 10000) {
       candidates.push({ p1, p2, penalty });
     }
   }
@@ -259,7 +264,13 @@ function backtrackPair(
     used.add(candidate.p2.id);
     currentPairs.push({ p1: candidate.p1, p2: candidate.p2 });
 
-    const result = backtrackPair(players, index + 1, currentPairs, used);
+    const result = backtrackPair(
+      players,
+      index + 1,
+      currentPairs,
+      used,
+      allowRematch
+    );
     if (result !== null) {
       return result;
     }
@@ -316,20 +327,19 @@ export function generatePairings(players: Player[]): {
         floaters.push(...unpaired);
       }
     } else {
-      bracketPlayers.sort((a, b) => a.elo - b.elo);
+      // Keep all unmatched players as floaters for lower score brackets.
+      floaters.push(...bracketPlayers.filter((p) => !usedPlayers.has(p.id)));
+    }
+  }
 
-      if (bracketPlayers.length > 0) {
-        floaters.push(bracketPlayers[0]);
-        bracketPlayers = bracketPlayers.slice(1);
-
-        const retryPairs = pairBracket(bracketPlayers, usedPlayers);
-        if (retryPairs) {
-          for (const pair of retryPairs) {
-            allPairs.push(pair);
-            usedPlayers.add(pair.p1.id);
-            usedPlayers.add(pair.p2.id);
-          }
-        }
+  const remainingPlayers = workingPlayers.filter((p) => !usedPlayers.has(p.id));
+  if (remainingPlayers.length > 0) {
+    const recoveredPairs = pairBracket(remainingPlayers, usedPlayers, true);
+    if (recoveredPairs) {
+      for (const pair of recoveredPairs) {
+        allPairs.push(pair);
+        usedPlayers.add(pair.p1.id);
+        usedPlayers.add(pair.p2.id);
       }
     }
   }
@@ -376,9 +386,20 @@ export async function generateScheduledRound() {
     }
 
     const { pairs, bye } = generatePairings(availablePlayers);
+    const expectedGames =
+      Math.floor(availablePlayers.length / 2) + (bye ? 1 : 0);
+    const generatedGames = pairs.length + (bye ? 1 : 0);
 
     if (pairs.length === 0 && !bye) {
       return { success: false, error: "Failed to generate pairings" };
+    }
+
+    if (generatedGames !== expectedGames) {
+      return {
+        success: false,
+        error:
+          "Failed to generate complete pairings for all available players.",
+      };
     }
 
     const nextRound =
@@ -395,6 +416,8 @@ export async function generateScheduledRound() {
         white_score: null,
         black_score: null,
         is_bye: false,
+        white_bye: false,
+        black_bye: false,
       };
     });
 
@@ -403,9 +426,11 @@ export async function generateScheduledRound() {
         round_number: nextRound,
         white_player_id: bye.id,
         black_player_id: null,
-        white_score: 1,
+        white_score: null,
         black_score: null,
         is_bye: true,
+        white_bye: true,
+        black_bye: false,
       });
     }
 
@@ -522,6 +547,8 @@ export async function addGame(
       white_score: whiteScore,
       black_score: blackScore,
       is_bye: false,
+      white_bye: false,
+      black_bye: false,
     })
     .select()
     .single();
