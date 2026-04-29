@@ -10,7 +10,7 @@ const INFO_CARDS = [
     id: "date",
     icon: Calendar,
     label: "DATE",
-    lines: ["April 16 – May 16, 2026", "1 Month Event"],
+    lines: ["May 2, 2026", "Single Day Event"],
   },
   {
     id: "category",
@@ -50,13 +50,13 @@ const RULES = [
     id: "rounds",
     icon: Flag,
     label: "ROUNDS",
-    value: "Swiss: 7 Rounds  |  Knockout: Best of 3",
+    value: "To be announced",
   },
   {
     id: "tie-breaks",
     icon: Scale,
     label: "TIE-BREAKS",
-    value: "Buchholz, Sonneborn-Berger, Direct Encounter, Armageddon",
+    value: "Buchholz, Direct Encounter, Fewer Byes, Armageddon",
   },
 ];
 
@@ -301,3 +301,4 @@ export default function ChessLandingPage() {
     </div>
   );
 }
+

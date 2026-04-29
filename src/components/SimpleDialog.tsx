@@ -1,7 +1,7 @@
 export default function SimpleDialog({ isOpen, onClose, onConfirm, title, description, confirmText, confirmColor }: {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: () => void | Promise<void>;
   title: string;
   description: string;
   confirmText: string;
@@ -21,8 +21,8 @@ export default function SimpleDialog({ isOpen, onClose, onConfirm, title, descri
             Cancel
           </button>
           <button
-            onClick={() => {
-              onConfirm();
+            onClick={async () => {
+              await onConfirm();
               onClose();
             }}
             className={`px-4 py-2 text-sm font-medium text-black rounded transition-colors cursor-pointer ${confirmColor}`}

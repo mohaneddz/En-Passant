@@ -76,16 +76,21 @@ export const useGamesList = (games: any[], onGameUpdate?: () => void, onValidate
   };
 
   const handleResultSelect = async (gameIndex: number, result: string, isBye: boolean, game: any) => {
+    const hasOpponent = Number.isInteger(game?.black) && game.black > 0;
+    const forcedBye = !hasOpponent;
+    const effectiveIsBye = forcedBye ? true : isBye;
+
     setSelectedResults(prev => {
       const next = { ...prev };
-      if (result) {
-        next[gameIndex] = result;
+      const nextResult = forcedBye ? '1-0' : result;
+      if (nextResult) {
+        next[gameIndex] = nextResult;
       } else {
         delete next[gameIndex];
       }
       return next;
     });
-    setSelectedByes(prev => ({ ...prev, [gameIndex]: isBye }));
+    setSelectedByes(prev => ({ ...prev, [gameIndex]: effectiveIsBye }));
 
     if (!game) {
       console.error("Game data is missing");
@@ -94,27 +99,25 @@ export const useGamesList = (games: any[], onGameUpdate?: () => void, onValidate
     
     // Map UI result to DB result format
     let dbResult: "WHITE_WINS" | "BLACK_WINS" | "DRAW" | "PENDING" = "PENDING";
+    const effectiveResult = forcedBye ? "1-0" : result;
 
-    if (result === '1-0') {
+    if (effectiveResult === '1-0') {
       dbResult = 'WHITE_WINS';
-    } else if (result === '0-1') {
+    } else if (effectiveResult === '0-1') {
       dbResult = 'BLACK_WINS';
-    } else if (result === '0.5-0.5') {
+    } else if (effectiveResult === '0.5-0.5') {
       dbResult = 'DRAW';
     }
 
-    let presence = typeof game?.presence === "number" ? game.presence : 2;
-    if (isBye) {
-      presence = 1;
-    } else if (presence === 1) {
-      presence = 2;
-    }
+    // Admin result buttons should always persist as a normal played match
+    // unless this is a true no-opponent/forced-bye row.
+    const presence = forcedBye || effectiveIsBye ? 1 : 2;
 
     try {
       await updateGameResult(
         game.id,
         dbResult,
-        isBye,
+        effectiveIsBye,
         game.white,
         game.black,
         presence

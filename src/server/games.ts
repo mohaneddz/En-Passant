@@ -293,9 +293,15 @@ export function generatePairings(players: Player[]): {
   let workingPlayers = sortedPlayers;
 
   if (sortedPlayers.length % 2 !== 0) {
-    const byeCandidates = [...sortedPlayers].sort((a, b) => {
-      if (a.byes !== b.byes) return a.byes - b.byes;
-      return a.elo - b.elo;
+    const minByeCount = Math.min(...sortedPlayers.map((player) => player.byes));
+    const playersWithFewestByes = sortedPlayers.filter(
+      (player) => player.byes === minByeCount
+    );
+    const byeCandidates = [...playersWithFewestByes].sort((a, b) => {
+      if (a.score !== b.score) return a.score - b.score;
+      if (a.buchholz !== b.buchholz) return a.buchholz - b.buchholz;
+      if (a.elo !== b.elo) return a.elo - b.elo;
+      return a.id - b.id;
     });
 
     bye = byeCandidates[0];

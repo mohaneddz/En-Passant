@@ -3,13 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "predev": "node scripts/copy-assets.cjs",
     "dev": "next dev -p 1972",
-    "prebuild": "node scripts/copy-assets.cjs",
     "build": "next build",
     "start": "next dev -p 1972",
     "lint": "eslint",
     "copy-assets": "node scripts/copy-assets.cjs",
+    "copy-assets:backgrounds": "node scripts/copy-assets.cjs --with-backgrounds",
+    "copy-assets:force": "node scripts/copy-assets.cjs --with-backgrounds --force",
     "test:db": "node scripts/db-integration-test.mjs"
   },
   "dependencies": {

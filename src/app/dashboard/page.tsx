@@ -49,6 +49,7 @@ export default function ChessDashboard() {
     handleResetAllPlayers,
     handleAbsentPlayer,
   } = useDashboard();
+  const [showResetDialog, setShowResetDialog] = useState(false);
 
   const [games, setGames] = useState<
     Array<{
@@ -177,7 +178,7 @@ export default function ChessDashboard() {
               onDelete={handleDeletePlayer}
               onRefresh={fetchPlayers}
               onRestore={handleRestorePlayer}
-              onReset={handleResetAllPlayers}
+              onReset={() => setShowResetDialog(true)}
               onAbsent={handleAbsentPlayer}
             />
           </div>
@@ -201,6 +202,19 @@ export default function ChessDashboard() {
             />
           </div>
         )}
+
+        <SimpleDialog
+          isOpen={showResetDialog}
+          onClose={() => setShowResetDialog(false)}
+          onConfirm={async () => {
+            await handleResetAllPlayers();
+            window.location.reload();
+          }}
+          title="Reset Tournament?"
+          description="This will clear tournament progress and reset all players. This action cannot be undone."
+          confirmText="Reset Tournament"
+          confirmColor="bg-red-500 hover:bg-red-400 text-white"
+        />
           </div>
         )}
       </main>

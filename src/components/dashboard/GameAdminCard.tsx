@@ -77,11 +77,12 @@ export default function GameAdminCard({
     onSelectResult?.(resultToUse, newByeState);
   };
 
-  const isSoloByeReadonly = !isEditable && presence === 1 && (!blackPlayer || blackPlayer === 0);
+  const isNoOpponent = !blackPlayer || blackPlayer === 0;
+  const isSoloByeReadonly = isNoOpponent;
 
   if (isSoloByeReadonly) {
     return (
-      <div className="bg-[#071034]/60 backdrop-blur-xl border border-cyan-500/10 rounded-2xl p-4 flex flex-col sm:flex-row items-center gap-4 opacity-60 grayscale cursor-not-allowed relative py-6 shadow-xl">
+      <div className="bg-[#071034]/60 backdrop-blur-xl border border-cyan-500/20 rounded-2xl p-4 flex items-center justify-center relative py-8 shadow-xl">
         {/* Delete Button */}
         {isEditable && onDelete && (
           <button
@@ -99,19 +100,16 @@ export default function GameAdminCard({
         </div>
 
         {/* Player with Bye */}
-        <div className="flex-1 flex items-center justify-center sm:justify-start gap-4 w-full ml-10">
-          <div className="text-lg font-black text-[#00e5ff] tracking-tight uppercase">
+        <div className="flex items-center justify-center w-full">
+          <div className="text-xl font-black text-[#00e5ff] tracking-tight uppercase text-center">
             {white}
-          </div>
-          <div className="text-[10px] font-black text-cyan-500/30 uppercase tracking-[0.2em] italic">
-            → Automated 1 Pt Entry (BYE)
           </div>
         </div>
 
         {/* Status Badge */}
-        <div className="flex items-center gap-1 min-w-[140px] justify-end pr-2">
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1">
           <span className="px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border flex items-center gap-2 bg-cyan-500/5 text-cyan-500/60 border-cyan-500/20">
-            SECURED
+            FORCED BYE
             <Lock className="w-3 h-3 opacity-60" />
           </span>
         </div>
