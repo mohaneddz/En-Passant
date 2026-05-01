@@ -162,6 +162,27 @@ interface PairingCandidate {
   penalty: number;
 }
 
+function selectByePlayer(players: Player[]): Player {
+  const minByeCount = Math.min(...players.map((player) => player.byes));
+
+  // Start from the lowest standings and move downward until we find
+  // someone with the fewest byes, so byes are distributed before repeats.
+  const orderedByLowestStanding = [...players].sort((a, b) => {
+    if (a.score !== b.score) return a.score - b.score;
+    if (a.buchholz !== b.buchholz) return a.buchholz - b.buchholz;
+    if (a.elo !== b.elo) return a.elo - b.elo;
+    return a.id - b.id;
+  });
+
+  for (const player of orderedByLowestStanding) {
+    if (player.byes === minByeCount) {
+      return player;
+    }
+  }
+
+  return orderedByLowestStanding[0];
+}
+
 function calculatePairingPenalty(
   p1: Player,
   p2: Player,
@@ -293,18 +314,7 @@ export function generatePairings(players: Player[]): {
   let workingPlayers = sortedPlayers;
 
   if (sortedPlayers.length % 2 !== 0) {
-    const minByeCount = Math.min(...sortedPlayers.map((player) => player.byes));
-    const playersWithFewestByes = sortedPlayers.filter(
-      (player) => player.byes === minByeCount
-    );
-    const byeCandidates = [...playersWithFewestByes].sort((a, b) => {
-      if (a.score !== b.score) return a.score - b.score;
-      if (a.buchholz !== b.buchholz) return a.buchholz - b.buchholz;
-      if (a.elo !== b.elo) return a.elo - b.elo;
-      return a.id - b.id;
-    });
-
-    bye = byeCandidates[0];
+    bye = selectByePlayer(sortedPlayers);
     workingPlayers = sortedPlayers.filter((player) => player.id !== bye!.id);
   }
 
@@ -315,7 +325,7 @@ export function generatePairings(players: Player[]): {
 
   for (let i = 0; i < brackets.length; i += 1) {
     const bracket = brackets[i];
-    let bracketPlayers = [...bracket.players, ...floaters];
+    const bracketPlayers = [...bracket.players, ...floaters];
     floaters.length = 0;
 
     const pairs = pairBracket(bracketPlayers, usedPlayers);
@@ -379,6 +389,26 @@ async function fetchSnapshot(): Promise<{
 export async function generateScheduledRound() {
   try {
     const { playersRows, matchesRows } = await fetchSnapshot();
+
+    if (matchesRows.length > 0) {
+      const currentRound = Math.max(
+        ...matchesRows.map((match) => match.round_number)
+      );
+      const currentRoundMatches = matchesRows.filter(
+        (match) => match.round_number === currentRound
+      );
+      const hasPendingInCurrentRound = currentRoundMatches.some((match) =>
+        isPendingMatch(match)
+      );
+
+      if (hasPendingInCurrentRound) {
+        return {
+          success: false,
+          error: `Cannot generate next round until round ${currentRound} is fully completed.`,
+        };
+      }
+    }
+
     const derivedPlayers = derivePlayers(playersRows, matchesRows);
     const availablePlayers = derivedPlayers.filter(
       (player) => player.is_active && player.is_present
@@ -432,7 +462,7 @@ export async function generateScheduledRound() {
         round_number: nextRound,
         white_player_id: bye.id,
         black_player_id: null,
-        white_score: null,
+        white_score: 1,
         black_score: null,
         is_bye: true,
         white_bye: true,
