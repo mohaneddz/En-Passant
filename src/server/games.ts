@@ -162,6 +162,14 @@ interface PairingCandidate {
   penalty: number;
 }
 
+interface BacktrackContext {
+  startedAt: number;
+  calls: number;
+  maxCalls: number;
+  maxDurationMs: number;
+  aborted: boolean;
+}
+
 function selectByePlayer(players: Player[]): Player {
   const minByeCount = Math.min(...players.map((player) => player.byes));
 
@@ -235,6 +243,150 @@ function createScoreBrackets(players: Player[]): ScoreBracket[] {
   return brackets;
 }
 
+function buildCandidatesForPlayer(
+  p1: Player,
+  unpaired: Player[],
+  allowRematch: boolean
+): PairingCandidate[] {
+  const candidates: PairingCandidate[] = [];
+
+  for (const p2 of unpaired) {
+    if (p1.id === p2.id) continue;
+
+    const penalty = calculatePairingPenalty(p1, p2, allowRematch);
+    if (allowRematch || penalty < 10000) {
+      candidates.push({ p1, p2, penalty });
+    }
+  }
+
+  candidates.sort((a, b) => a.penalty - b.penalty);
+  return candidates;
+}
+
+function greedyPairAvailable(
+  available: Player[],
+  allowRematch = false
+): { p1: Player; p2: Player }[] | null {
+  if (available.length % 2 !== 0) {
+    return null;
+  }
+
+  const queue = [...available];
+  const pairs: { p1: Player; p2: Player }[] = [];
+
+  while (queue.length > 1) {
+    const p1 = queue.shift()!;
+    let bestIndex = -1;
+    let bestPenalty = Number.POSITIVE_INFINITY;
+
+    for (let i = 0; i < queue.length; i += 1) {
+      const p2 = queue[i];
+      const penalty = calculatePairingPenalty(p1, p2, allowRematch);
+      if (!allowRematch && penalty >= 10000) {
+        continue;
+      }
+      if (penalty < bestPenalty) {
+        bestPenalty = penalty;
+        bestIndex = i;
+      }
+    }
+
+    if (bestIndex === -1) {
+      if (!allowRematch) {
+        return null;
+      }
+      bestIndex = 0;
+    }
+
+    const [p2] = queue.splice(bestIndex, 1);
+    pairs.push({ p1, p2 });
+  }
+
+  return queue.length === 0 ? pairs : null;
+}
+
+function backtrackPair(
+  players: Player[],
+  currentPairs: { p1: Player; p2: Player }[],
+  used: Set<number>,
+  allowRematch: boolean,
+  context: BacktrackContext,
+  deadStates: Set<string>
+): { p1: Player; p2: Player }[] | null {
+  context.calls += 1;
+  if (
+    context.calls > context.maxCalls ||
+    Date.now() - context.startedAt > context.maxDurationMs
+  ) {
+    context.aborted = true;
+    return null;
+  }
+
+  const unpaired = players.filter((player) => !used.has(player.id));
+  if (unpaired.length === 0) {
+    return currentPairs;
+  }
+  if (unpaired.length === 1) {
+    return null;
+  }
+
+  const stateKey = unpaired
+    .map((player) => player.id)
+    .sort((a, b) => a - b)
+    .join(",");
+  if (deadStates.has(stateKey)) {
+    return null;
+  }
+
+  let pivot: Player | null = null;
+  let pivotCandidates: PairingCandidate[] = [];
+
+  for (const candidatePlayer of unpaired) {
+    const candidates = buildCandidatesForPlayer(
+      candidatePlayer,
+      unpaired,
+      allowRematch
+    );
+    if (candidates.length === 0) {
+      deadStates.add(stateKey);
+      return null;
+    }
+
+    if (pivot === null || candidates.length < pivotCandidates.length) {
+      pivot = candidatePlayer;
+      pivotCandidates = candidates;
+      if (pivotCandidates.length === 1) {
+        break;
+      }
+    }
+  }
+
+  for (const candidate of pivotCandidates) {
+    used.add(candidate.p1.id);
+    used.add(candidate.p2.id);
+    currentPairs.push({ p1: candidate.p1, p2: candidate.p2 });
+
+    const result = backtrackPair(
+      players,
+      currentPairs,
+      used,
+      allowRematch,
+      context,
+      deadStates
+    );
+    if (result !== null) {
+      return result;
+    }
+
+    used.delete(candidate.p1.id);
+    used.delete(candidate.p2.id);
+    currentPairs.pop();
+  }
+
+  deadStates.add(stateKey);
+  return null;
+}
+
 function pairBracket(
   players: Player[],
   usedGlobal: Set<number>,
@@ -247,58 +399,28 @@ function pairBracket(
   if (available.length === 0) return [];
   if (available.length === 1) return null;
 
-  return backtrackPair(available, 0, [], usedGlobal, allowRematch);
-}
+  const context: BacktrackContext = {
+    startedAt: Date.now(),
+    calls: 0,
+    maxCalls: 250_000,
+    maxDurationMs: 750,
+    aborted: false,
+  };
 
-function backtrackPair(
-  players: Player[],
-  index: number,
-  currentPairs: { p1: Player; p2: Player }[],
-  used: Set<number>,
-  allowRematch = false
-): { p1: Player; p2: Player }[] | null {
-  if (index >= players.length) {
-    return currentPairs;
+  const result = backtrackPair(
+    available,
+    [],
+    usedGlobal,
+    allowRematch,
+    context,
+    new Set<string>()
+  );
+  if (result !== null) {
+    return result;
   }
 
-  if (used.has(players[index].id)) {
-    return backtrackPair(players, index + 1, currentPairs, used);
-  }
-
-  const p1 = players[index];
-  const candidates: PairingCandidate[] = [];
-
-  for (let i = index + 1; i < players.length; i += 1) {
-    if (used.has(players[i].id)) continue;
-
-    const p2 = players[i];
-    const penalty = calculatePairingPenalty(p1, p2, allowRematch);
-    if (allowRematch || penalty < 10000) {
-      candidates.push({ p1, p2, penalty });
-    }
-  }
-
-  candidates.sort((a, b) => a.penalty - b.penalty);
-
-  for (const candidate of candidates) {
-    used.add(candidate.p1.id);
-    used.add(candidate.p2.id);
-    currentPairs.push({ p1: candidate.p1, p2: candidate.p2 });
-
-    const result = backtrackPair(
-      players,
-      index + 1,
-      currentPairs,
-      used,
-      allowRematch
-    );
-    if (result !== null) {
-      return result;
-    }
-
-    used.delete(candidate.p1.id);
-    used.delete(candidate.p2.id);
-    currentPairs.pop();
+  if (context.aborted) {
+    return greedyPairAvailable(available, allowRematch);
   }
 
   return null;
@@ -328,7 +450,13 @@ export function generatePairings(players: Player[]): {
     const bracketPlayers = [...bracket.players, ...floaters];
     floaters.length = 0;
 
-    const pairs = pairBracket(bracketPlayers, usedPlayers);
+    let pairs = pairBracket(bracketPlayers, usedPlayers);
+    if (pairs === null) {
+      // When strict no-rematch pairing inside this bracket is impossible,
+      // prefer resolving locally rather than pushing a large unresolved pool
+      // downward and exploding the global search space.
+      pairs = pairBracket(bracketPlayers, usedPlayers, true);
+    }
 
     if (pairs !== null) {
       for (const pair of pairs) {
