@@ -447,11 +447,10 @@ function buildInvalidByeAssignmentError(
       return false;
     }
 
-    return (
-      match.is_bye ||
-      Boolean(match.white_bye) ||
-      Boolean(match.black_bye)
-    );
+    // Two-player matches can legitimately carry bye flags to track absence
+    // penalties/tiebreak effects. The only invalid case here is a true BYE row
+    // (`is_bye=true`) that still has two participants.
+    return Boolean(match.is_bye);
   });
 
   if (invalidByeMatches.length === 0) {
@@ -466,18 +465,14 @@ function buildInvalidByeAssignmentError(
       playersById.get(match.black_player_id as number) ??
       `Player #${match.black_player_id}`;
 
-    const reason = match.is_bye
-      ? "match is marked as BYE with two participants"
-      : `bye flags are set (white_bye=${Boolean(match.white_bye)}, black_bye=${Boolean(
-          match.black_bye
-        )})`;
+    const reason = "match is marked as BYE with two participants";
 
     return `#${match.id} ${whiteName} vs ${blackName} (${reason})`;
   });
 
-  return `Cannot generate next round. Round ${currentRound} has invalid BYE assignments on matches with two participants: ${details.join(
+  return `Cannot generate next round. Round ${currentRound} has invalid BYE rows with two participants: ${details.join(
     "; "
-  )}. Remove BYE from these matches, then try again.`;
+  )}. Remove the BYE mark from these matches, then try again.`;
 }
 
 export async function generateScheduledRound() {

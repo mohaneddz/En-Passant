@@ -143,58 +143,6 @@ export default function ChessDashboard() {
           </div>
         )}
 
-        <SimpleDialog
-          isOpen={showGenerateDialog}
-          onClose={() => setShowGenerateDialog(false)}
-          onConfirm={async () => {
-            const success = await handleGenerateRound();
-            if (success) {
-              await refreshGames();
-            }
-            return success;
-          }}
-          title="Generate New Round?"
-          description="This will create pairings for the next round. You can review them before starting the round."
-          confirmText="Generate"
-          confirmColor="bg-cyan-500 hover:bg-cyan-400 text-[#050d1e]"
-        />
-
-        <SimpleDialog
-          isOpen={showStartDialog}
-          onClose={() => setShowStartDialog(false)}
-          onConfirm={async () => {
-            const success = await handleStartRound();
-            if (success) {
-              await refreshGames();
-            }
-            return success;
-          }}
-          title="Start Round?"
-          description="This will officially start the round for result entry."
-          confirmText="Start Round"
-          confirmColor="bg-cyan-500 hover:bg-cyan-400 text-[#050d1e]"
-        />
-
-        <SimpleDialog
-          isOpen={showRemoveDialog && !removeDisabled}
-          onClose={() => setShowRemoveDialog(false)}
-          onConfirm={async () => {
-            const success = await handleRemoveLastRound();
-            if (success) {
-              await refreshGames();
-            }
-            return success;
-          }}
-          title={latestRound ? `Remove Round ${latestRound}?` : "Remove Last Round?"}
-          description={
-            latestRound
-              ? `This will delete all games from round ${latestRound}. This action cannot be undone.`
-              : "This will delete the entire latest round. This action cannot be undone."
-          }
-          confirmText="Remove"
-          confirmColor="bg-red-500 hover:bg-red-400 text-white"
-        />
-
         {activeTab === "players" && (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             <AddPlayerForm
@@ -231,41 +179,94 @@ export default function ChessDashboard() {
             />
           </div>
         )}
-
-        <SimpleDialog
-          isOpen={showResetDialog}
-          onClose={() => setShowResetDialog(false)}
-          onConfirm={async () => {
-            const success = await handleResetAllPlayers();
-            if (success) {
-              await refreshGames();
-            }
-            return success;
-          }}
-          title="Reset Scores?"
-          description="This will clear all rounds and scores, but keep players in the roster."
-          confirmText="Reset Scores"
-          confirmColor="bg-amber-500 hover:bg-amber-400 text-black"
-        />
-
-        <SimpleDialog
-          isOpen={showDeleteTournamentDialog}
-          onClose={() => setShowDeleteTournamentDialog(false)}
-          onConfirm={async () => {
-            const success = await handleDeleteTournamentData();
-            if (success) {
-              await refreshGames();
-            }
-            return success;
-          }}
-          title="Delete Tournament Data?"
-          description="This will permanently delete all players, rounds, and scores. This action cannot be undone."
-          confirmText="Delete Everything"
-          confirmColor="bg-red-500 hover:bg-red-400 text-white"
-        />
           </div>
         )}
       </main>
+
+      {/* Render Dialogs outside of the transformed container to avoid 'transform' breaking 'position: fixed' */}
+      <SimpleDialog
+        isOpen={showGenerateDialog}
+        onClose={() => setShowGenerateDialog(false)}
+        onConfirm={async () => {
+          const success = await handleGenerateRound();
+          if (success) {
+            await refreshGames();
+          }
+          return true;
+        }}
+        title="Generate New Round?"
+        description="This will create pairings for the next round. You can review them before starting the round."
+        confirmText="Generate"
+        confirmColor="bg-cyan-500 hover:bg-cyan-400 text-[#050d1e]"
+      />
+
+      <SimpleDialog
+        isOpen={showStartDialog}
+        onClose={() => setShowStartDialog(false)}
+        onConfirm={async () => {
+          const success = await handleStartRound();
+          if (success) {
+            await refreshGames();
+          }
+          return true;
+        }}
+        title="Start Round?"
+        description="This will officially start the round for result entry."
+        confirmText="Start Round"
+        confirmColor="bg-cyan-500 hover:bg-cyan-400 text-[#050d1e]"
+      />
+
+      <SimpleDialog
+        isOpen={showRemoveDialog && !removeDisabled}
+        onClose={() => setShowRemoveDialog(false)}
+        onConfirm={async () => {
+          const success = await handleRemoveLastRound();
+          if (success) {
+            await refreshGames();
+          }
+          return true;
+        }}
+        title={latestRound ? `Remove Round ${latestRound}?` : "Remove Last Round?"}
+        description={
+          latestRound
+            ? `This will delete all games from round ${latestRound}. This action cannot be undone.`
+            : "This will delete the entire latest round. This action cannot be undone."
+        }
+        confirmText="Remove"
+        confirmColor="bg-red-500 hover:bg-red-400 text-white"
+      />
+
+      <SimpleDialog
+        isOpen={showResetDialog}
+        onClose={() => setShowResetDialog(false)}
+        onConfirm={async () => {
+          const success = await handleResetAllPlayers();
+          if (success) {
+            await refreshGames();
+          }
+          return true;
+        }}
+        title="Reset Scores?"
+        description="This will clear all rounds and scores, but keep players in the roster."
+        confirmText="Reset Scores"
+        confirmColor="bg-amber-500 hover:bg-amber-400 text-black"
+      />
+
+      <SimpleDialog
+        isOpen={showDeleteTournamentDialog}
+        onClose={() => setShowDeleteTournamentDialog(false)}
+        onConfirm={async () => {
+          const success = await handleDeleteTournamentData();
+          if (success) {
+            await refreshGames();
+          }
+          return true;
+        }}
+        title="Delete Tournament Data?"
+        description="This will permanently delete all players, rounds, and scores. This action cannot be undone."
+        confirmText="Delete Everything"
+        confirmColor="bg-red-500 hover:bg-red-400 text-white"
+      />
     </div>
   );
 }

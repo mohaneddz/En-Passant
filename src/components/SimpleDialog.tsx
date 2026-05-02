@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+
 export default function SimpleDialog({ isOpen, onClose, onConfirm, title, description, confirmText, confirmColor }: {
   isOpen: boolean;
   onClose: () => void;
@@ -7,10 +9,21 @@ export default function SimpleDialog({ isOpen, onClose, onConfirm, title, descri
   confirmText: string;
   confirmColor: string;
 }) {
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="bg-[#1a1a1a] border border-gray-800 p-6 rounded-lg shadow-xl max-w-md w-full mx-4 animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm h-screen w-screen overflow-hidden">
+      <div className="bg-[#1a1a1a] border border-gray-800 p-6 rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
         <h3 className="text-lg font-semibold text-white mb-2">{title}</h3>
         <p className="text-gray-400 mb-6">{description}</p>
         <div className="flex justify-end gap-3">
