@@ -211,6 +211,7 @@ export default function GameAdminCard({
           </div>
         )}
       </div>
+
     </div>
   );
 }

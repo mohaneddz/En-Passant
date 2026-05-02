@@ -18,7 +18,16 @@ export interface GamesListRef {
 }
 
 const GamesList = forwardRef<GamesListRef, GamesListProps>(({ games, onValidateRound, onGameUpdate }, ref) => {
-  const { rounds, currentIndex, selectedResults, selectedByes, nextRound, prevRound, handleResultSelect, triggerValidation } = useGamesList(games, onGameUpdate, onValidateRound);
+  const {
+    rounds,
+    currentIndex,
+    selectedResults,
+    selectedByes,
+    nextRound,
+    prevRound,
+    handleResultSelect,
+    triggerValidation,
+  } = useGamesList(games, onGameUpdate, onValidateRound);
 
   useImperativeHandle(ref, () => ({
     triggerValidation,

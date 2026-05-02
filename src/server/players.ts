@@ -177,3 +177,23 @@ export async function resetAllPlayers() {
 
   return data;
 }
+
+export async function deleteTournamentData() {
+  const { error: deleteMatchesError } = await supabase
+    .from("matches")
+    .delete()
+    .gt("id", 0);
+
+  if (deleteMatchesError) {
+    throw deleteMatchesError;
+  }
+
+  const { error: deletePlayersError } = await supabase
+    .from("players")
+    .delete()
+    .gt("id", 0);
+
+  if (deletePlayersError) {
+    throw deletePlayersError;
+  }
+}

@@ -2,14 +2,15 @@
 
 import { Player } from "@/types/player";
 import PlayerRow from "./PlayerRow";
-import { RotateCcw, Trash2 } from "lucide-react";
+import { BarChart3, RotateCcw, Trash2 } from "lucide-react";
 
 interface PlayersTableProps {
   players: Player[];
   onDelete: (id: number) => void;
   onRestore: (id: number) => void;
   onRefresh: () => void;
-  onReset: () => void;
+  onResetScores: () => void;
+  onDeleteTournament: () => void;
   onAbsent: (id: number) => void;
 }
 
@@ -18,7 +19,8 @@ export default function PlayersTable({
   onDelete,
   onRestore,
   onRefresh,
-  onReset,
+  onResetScores,
+  onDeleteTournament,
   onAbsent,
 }: PlayersTableProps) {
   return (
@@ -27,20 +29,30 @@ export default function PlayersTable({
         <div className="flex justify-between items-center">
           <h2 className="text-white text-2xl font-black uppercase tracking-tighter" style={{ fontFamily: "var(--font-heading)" }}>Competitors Roster</h2>
 
-          <div className="flex gap-4">
+          <div className="flex flex-wrap gap-2">
             <button
               onClick={onRefresh}
-              className="p-3 bg-cyan-500/10 hover:bg-cyan-500/20 text-[#00e5ff] hover:text-white rounded-xl transition-all border border-cyan-500/20 hover:border-cyan-500/40"
-              title="Refresh Users"
+              className="inline-flex items-center gap-2 px-3 py-2 bg-cyan-500/10 hover:bg-cyan-500/20 text-[#00e5ff] hover:text-white rounded-xl transition-all border border-cyan-500/20 hover:border-cyan-500/40 text-xs font-black uppercase tracking-widest"
+              title="Refresh"
             >
-              <RotateCcw className="w-5 h-5" strokeWidth={3} />
+              <RotateCcw className="w-4 h-4" strokeWidth={3} />
+              Refresh
             </button>
             <button
-              onClick={onReset}
-              className="p-3 bg-cyan-500/10 hover:bg-cyan-500/20 text-[#00e5ff] hover:text-white rounded-xl transition-all border border-cyan-500/20 hover:border-cyan-500/40"
-              title="Reset Tournament"
+              onClick={onResetScores}
+              className="inline-flex items-center gap-2 px-3 py-2 bg-cyan-500/10 hover:bg-cyan-500/20 text-[#00e5ff] hover:text-white rounded-xl transition-all border border-cyan-500/20 hover:border-cyan-500/40 text-xs font-black uppercase tracking-widest"
+              title="Reset Scores"
             >
-              <Trash2 className="w-5 h-5" strokeWidth={3} />
+              <BarChart3 className="w-4 h-4" strokeWidth={3} />
+              Reset Scores
+            </button>
+            <button
+              onClick={onDeleteTournament}
+              className="inline-flex items-center gap-2 px-3 py-2 bg-red-900/20 hover:bg-red-800/30 text-red-300 hover:text-white rounded-xl transition-all border border-red-500/30 hover:border-red-400/50 text-xs font-black uppercase tracking-widest"
+              title="Delete Tournament Data"
+            >
+              <Trash2 className="w-4 h-4" strokeWidth={3} />
+              Delete
             </button>
           </div>
         </div>

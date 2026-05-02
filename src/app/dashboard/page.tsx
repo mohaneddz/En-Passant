@@ -32,6 +32,8 @@ export default function ChessDashboard() {
     setShowStartDialog,
     showRemoveDialog,
     setShowRemoveDialog,
+    actionError,
+    setActionError,
     hasPendingRound,
     gamesListRef,
     stats,
@@ -47,9 +49,11 @@ export default function ChessDashboard() {
     fetchRounds,
     handleRestorePlayer,
     handleResetAllPlayers,
+    handleDeleteTournamentData,
     handleAbsentPlayer,
   } = useDashboard();
   const [showResetDialog, setShowResetDialog] = useState(false);
+  const [showDeleteTournamentDialog, setShowDeleteTournamentDialog] = useState(false);
 
   const [games, setGames] = useState<
     Array<{
@@ -124,12 +128,30 @@ export default function ChessDashboard() {
           removeDisabled={removeDisabled}
         />
 
+        {actionError && (
+          <div className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-100">
+            <div className="flex items-start justify-between gap-3">
+              <p>{actionError}</p>
+              <button
+                type="button"
+                onClick={() => setActionError(null)}
+                className="shrink-0 rounded-md border border-red-400/40 px-2 py-1 text-xs font-semibold text-red-100 hover:bg-red-500/20"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        )}
+
         <SimpleDialog
           isOpen={showGenerateDialog}
           onClose={() => setShowGenerateDialog(false)}
           onConfirm={async () => {
-            await handleGenerateRound();
-            await refreshGames();
+            const success = await handleGenerateRound();
+            if (success) {
+              await refreshGames();
+            }
+            return success;
           }}
           title="Generate New Round?"
           description="This will create pairings for the next round. You can review them before starting the round."
@@ -141,8 +163,11 @@ export default function ChessDashboard() {
           isOpen={showStartDialog}
           onClose={() => setShowStartDialog(false)}
           onConfirm={async () => {
-            await handleStartRound();
-            await refreshGames();
+            const success = await handleStartRound();
+            if (success) {
+              await refreshGames();
+            }
+            return success;
           }}
           title="Start Round?"
           description="This will officially start the round for result entry."
@@ -154,8 +179,11 @@ export default function ChessDashboard() {
           isOpen={showRemoveDialog && !removeDisabled}
           onClose={() => setShowRemoveDialog(false)}
           onConfirm={async () => {
-            await handleRemoveLastRound();
-            await refreshGames();
+            const success = await handleRemoveLastRound();
+            if (success) {
+              await refreshGames();
+            }
+            return success;
           }}
           title={latestRound ? `Remove Round ${latestRound}?` : "Remove Last Round?"}
           description={
@@ -178,7 +206,8 @@ export default function ChessDashboard() {
               onDelete={handleDeletePlayer}
               onRefresh={fetchPlayers}
               onRestore={handleRestorePlayer}
-              onReset={() => setShowResetDialog(true)}
+              onResetScores={() => setShowResetDialog(true)}
+              onDeleteTournament={() => setShowDeleteTournamentDialog(true)}
               onAbsent={handleAbsentPlayer}
             />
           </div>
@@ -207,12 +236,31 @@ export default function ChessDashboard() {
           isOpen={showResetDialog}
           onClose={() => setShowResetDialog(false)}
           onConfirm={async () => {
-            await handleResetAllPlayers();
-            window.location.reload();
+            const success = await handleResetAllPlayers();
+            if (success) {
+              await refreshGames();
+            }
+            return success;
           }}
-          title="Reset Tournament?"
-          description="This will clear tournament progress and reset all players. This action cannot be undone."
-          confirmText="Reset Tournament"
+          title="Reset Scores?"
+          description="This will clear all rounds and scores, but keep players in the roster."
+          confirmText="Reset Scores"
+          confirmColor="bg-amber-500 hover:bg-amber-400 text-black"
+        />
+
+        <SimpleDialog
+          isOpen={showDeleteTournamentDialog}
+          onClose={() => setShowDeleteTournamentDialog(false)}
+          onConfirm={async () => {
+            const success = await handleDeleteTournamentData();
+            if (success) {
+              await refreshGames();
+            }
+            return success;
+          }}
+          title="Delete Tournament Data?"
+          description="This will permanently delete all players, rounds, and scores. This action cannot be undone."
+          confirmText="Delete Everything"
           confirmColor="bg-red-500 hover:bg-red-400 text-white"
         />
           </div>

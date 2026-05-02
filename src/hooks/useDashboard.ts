@@ -1,6 +1,7 @@
 ﻿import { useEffect, useRef, useState } from "react";
 import {
   addPlayer,
+  deleteTournamentData,
   deletePlayer,
   getPlayerById,
   getPlayers,
@@ -37,6 +38,7 @@ export const useDashboard = () => {
   const [showStartDialog, setShowStartDialog] = useState(false);
   const [showRemoveDialog, setShowRemoveDialog] = useState(false);
   const [hasPendingRound, setHasPendingRound] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
   const gamesListRef = useRef<GamesListRef>(null);
 
   const [stats, setStats] = useState<StatsGridProps["stats"]>({
@@ -101,10 +103,33 @@ export const useDashboard = () => {
   };
 
   const handleResetAllPlayers = async () => {
-    await resetAllPlayers();
-    await fetchPlayers();
-    await fetchStats();
-    await fetchRounds();
+    setLoading(true);
+    setActionError(null);
+    try {
+      await resetAllPlayers();
+      await Promise.all([fetchPlayers(), fetchStats(), fetchRounds()]);
+      return true;
+    } catch (error) {
+      setActionError(getErrorMessage(error, "Failed to reset scores"));
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteTournamentData = async () => {
+    setLoading(true);
+    setActionError(null);
+    try {
+      await deleteTournamentData();
+      await Promise.all([fetchPlayers(), fetchStats(), fetchRounds()]);
+      return true;
+    } catch (error) {
+      setActionError(getErrorMessage(error, "Failed to delete tournament data"));
+      return false;
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleAbsentPlayer = async (id: number) => {
@@ -119,13 +144,21 @@ export const useDashboard = () => {
 
   const handleGenerateRound = async () => {
     setLoading(true);
+    setActionError(null);
     try {
       const result = await generateScheduledRound();
       if (!result.success) {
-        throw new Error(getErrorMessage(result.error, "Failed to generate round"));
+        setActionError(
+          getErrorMessage(result.error, "Failed to generate round")
+        );
+        return false;
       }
       setShowGenerateDialog(false);
       await Promise.all([fetchPlayers(), fetchStats(), fetchRounds()]);
+      return true;
+    } catch (error) {
+      setActionError(getErrorMessage(error, "Failed to generate round"));
+      return false;
     } finally {
       setLoading(false);
     }
@@ -133,13 +166,19 @@ export const useDashboard = () => {
 
   const handleStartRound = async () => {
     setLoading(true);
+    setActionError(null);
     try {
       const result = await startScheduledRound();
       if (!result.success) {
-        throw new Error(getErrorMessage(result.error, "Failed to start round"));
+        setActionError(getErrorMessage(result.error, "Failed to start round"));
+        return false;
       }
       setShowStartDialog(false);
       await Promise.all([fetchPlayers(), fetchStats(), fetchRounds()]);
+      return true;
+    } catch (error) {
+      setActionError(getErrorMessage(error, "Failed to start round"));
+      return false;
     } finally {
       setLoading(false);
     }
@@ -147,13 +186,19 @@ export const useDashboard = () => {
 
   const handleRemoveLastRound = async () => {
     setLoading(true);
+    setActionError(null);
     try {
       const result = await removeLastRound();
       if (!result.success) {
-        throw new Error(getErrorMessage(result.error, "Failed to remove round"));
+        setActionError(getErrorMessage(result.error, "Failed to remove round"));
+        return false;
       }
       setShowRemoveDialog(false);
       await Promise.all([fetchPlayers(), fetchStats(), fetchRounds()]);
+      return true;
+    } catch (error) {
+      setActionError(getErrorMessage(error, "Failed to remove round"));
+      return false;
     } finally {
       setLoading(false);
     }
@@ -218,6 +263,8 @@ export const useDashboard = () => {
     setShowStartDialog,
     showRemoveDialog,
     setShowRemoveDialog,
+    actionError,
+    setActionError,
     hasPendingRound,
     gamesListRef,
     stats,
@@ -233,6 +280,7 @@ export const useDashboard = () => {
     fetchRounds,
     handleRestorePlayer,
     handleResetAllPlayers,
+    handleDeleteTournamentData,
     handleAbsentPlayer,
   };
 };

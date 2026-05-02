@@ -386,6 +386,100 @@ async function fetchSnapshot(): Promise<{
   };
 }
 
+function buildPendingRoundError(
+  currentRound: number,
+  currentRoundMatches: MatchRecord[],
+  playersRows: PlayerRow[]
+): string {
+  const playersById = new Map(
+    playersRows.map((player) => [player.id, player.full_name] as const)
+  );
+  const pendingMatches = currentRoundMatches.filter((match) =>
+    isPendingMatch(match)
+  );
+
+  const pendingDetails = pendingMatches.map((match) => {
+    const whiteName =
+      playersById.get(match.white_player_id) ??
+      `Player #${match.white_player_id}`;
+    const blackName =
+      typeof match.black_player_id === "number"
+        ? (playersById.get(match.black_player_id) ??
+          `Player #${match.black_player_id}`)
+        : "BYE";
+
+    const hasWhiteScore = typeof match.white_score === "number";
+    const hasBlackScore =
+      match.black_player_id == null || typeof match.black_score === "number";
+
+    let reason = "result is still pending";
+    if (match.is_bye && match.white_score !== 1) {
+      reason = "bye result is not recorded";
+    } else if (!hasWhiteScore && !hasBlackScore) {
+      reason = "both scores are missing";
+    } else if (!hasWhiteScore) {
+      reason = "white score is missing";
+    } else if (!hasBlackScore) {
+      reason = "black score is missing";
+    }
+
+    return `#${match.id} ${whiteName} vs ${blackName} (${reason})`;
+  });
+
+  return `Cannot generate next round until round ${currentRound} is fully completed. Incomplete matches: ${pendingDetails.join(
+    "; "
+  )}.`;
+}
+
+function buildInvalidByeAssignmentError(
+  currentRound: number,
+  currentRoundMatches: MatchRecord[],
+  playersRows: PlayerRow[]
+): string | null {
+  const playersById = new Map(
+    playersRows.map((player) => [player.id, player.full_name] as const)
+  );
+
+  const invalidByeMatches = currentRoundMatches.filter((match) => {
+    const hasTwoParticipants =
+      typeof match.black_player_id === "number" && match.black_player_id > 0;
+    if (!hasTwoParticipants) {
+      return false;
+    }
+
+    return (
+      match.is_bye ||
+      Boolean(match.white_bye) ||
+      Boolean(match.black_bye)
+    );
+  });
+
+  if (invalidByeMatches.length === 0) {
+    return null;
+  }
+
+  const details = invalidByeMatches.map((match) => {
+    const whiteName =
+      playersById.get(match.white_player_id) ??
+      `Player #${match.white_player_id}`;
+    const blackName =
+      playersById.get(match.black_player_id as number) ??
+      `Player #${match.black_player_id}`;
+
+    const reason = match.is_bye
+      ? "match is marked as BYE with two participants"
+      : `bye flags are set (white_bye=${Boolean(match.white_bye)}, black_bye=${Boolean(
+          match.black_bye
+        )})`;
+
+    return `#${match.id} ${whiteName} vs ${blackName} (${reason})`;
+  });
+
+  return `Cannot generate next round. Round ${currentRound} has invalid BYE assignments on matches with two participants: ${details.join(
+    "; "
+  )}. Remove BYE from these matches, then try again.`;
+}
+
 export async function generateScheduledRound() {
   try {
     const { playersRows, matchesRows } = await fetchSnapshot();
@@ -397,6 +491,17 @@ export async function generateScheduledRound() {
       const currentRoundMatches = matchesRows.filter(
         (match) => match.round_number === currentRound
       );
+      const invalidByeError = buildInvalidByeAssignmentError(
+        currentRound,
+        currentRoundMatches,
+        playersRows
+      );
+      if (invalidByeError) {
+        return {
+          success: false,
+          error: invalidByeError,
+        };
+      }
       const hasPendingInCurrentRound = currentRoundMatches.some((match) =>
         isPendingMatch(match)
       );
@@ -404,7 +509,11 @@ export async function generateScheduledRound() {
       if (hasPendingInCurrentRound) {
         return {
           success: false,
-          error: `Cannot generate next round until round ${currentRound} is fully completed.`,
+          error: buildPendingRoundError(
+            currentRound,
+            currentRoundMatches,
+            playersRows
+          ),
         };
       }
     }
