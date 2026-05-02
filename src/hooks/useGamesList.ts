@@ -52,8 +52,10 @@ export const useGamesList = (games: any[], onGameUpdate?: () => void, onValidate
       rounds[currentIndex].games.forEach((game: any, index: number) => {
         const s = game.status?.toUpperCase();
         
-        // presence=1 => one player absent/solo BYE. presence=0 means both absent.
-        if (game.presence === 1) {
+        // presence=1 => one-player absence/solo-bye context.
+        // presence=0 => both players marked with bye flags.
+        // Both should keep the BYE toggle active in admin UI.
+        if (game.presence === 1 || game.presence === 0) {
           initialByes[index] = true;
         }
         
